@@ -1,7 +1,6 @@
 import functools
 import textwrap
 from dataclasses import dataclass, field
-from typing import Final, Literal
 
 import langchain_anthropic
 import langchain_openai
@@ -11,11 +10,7 @@ import sentence_transformers
 from langchain_core.language_models import BaseLanguageModel
 from sklearn import metrics
 
-Provider = Literal["anthropic", "openai"]
-
-DEFAULT_PROVIDER: Final[Provider] = "openai"
-DEFAULT_LLM_MODEL: Final[str] = "gpt-4o"
-DEFAULT_ENCODER_MODEL: Final[str] = "mixedbread-ai/mxbai-embed-large-v1"
+from bio_data_harmoniser.core import settings
 
 
 def clean_prompt_formatting(prompt: str) -> str:
@@ -23,7 +18,7 @@ def clean_prompt_formatting(prompt: str) -> str:
 
 
 @functools.cache
-def get_llm(provider: Provider = DEFAULT_PROVIDER, model_name: str = DEFAULT_LLM_MODEL) -> BaseLanguageModel:
+def get_llm(provider: settings.LlmProvider = settings.llms.provider, model_name: str = settings.llms.model) -> BaseLanguageModel:
     if provider == "anthropic":
         llm = langchain_anthropic.ChatAnthropic(
             model=model_name,
@@ -41,7 +36,7 @@ def get_llm(provider: Provider = DEFAULT_PROVIDER, model_name: str = DEFAULT_LLM
 
 @functools.cache
 def get_encoder(
-    model_name: str = DEFAULT_ENCODER_MODEL, device: str = "cpu"
+    model_name: str = settings.llms.embedding_model, device: str = "cpu"
 ) -> sentence_transformers.SentenceTransformer:
     # we pass the device explicitly, because there is a bug when used with Airflow, where it just hangs
     # when it tries to infer the device

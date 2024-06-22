@@ -16,7 +16,13 @@ from airflow.utils.trigger_rule import TriggerRule
 if TYPE_CHECKING:
     import pandera as pa
 
-AIRFLOW_OUTPUT_DIR = os.environ.get("AIRFLOW_OUTPUT_DIR", "/tmp/airflow")
+from bio_data_harmoniser.core import settings
+from bio_data_harmoniser.api.airflow import interface
+
+airflow_interface = interface.AirflowInterface.from_settings(
+    settings.airflow,
+    exception_cls=Exception,
+)
 
 
 @dataclass
@@ -40,7 +46,7 @@ def folder_path_from_task_instance(
     return cast(
         str,
         os.path.join(
-            AIRFLOW_OUTPUT_DIR,
+            settings.airflow.output_dir,
             f"dag_id={task_instance.dag_id}",
             f"run_id={task_instance.run_id}",
             *additional_parts,
@@ -81,19 +87,15 @@ SCHEMA_DEFINITION_DAG_ID = "schema_definition"
 
 
 def get_user_defined_schemas() -> list["pa.DataFrameSchema"]:
-    import requests
     import pandera as pa
 
-    response = requests.get(
-        f"http://localhost:8080/api/v1/dags/{SCHEMA_DEFINITION_DAG_ID}/dagRuns",
-        auth=("admin", "admin"),
+    dag_runs = airflow_interface.get_dag_runs(
+        SCHEMA_DEFINITION_DAG_ID,
         params={
             "state": ["success"],
             "order_by": "-execution_date",
         },
     )
-    response.raise_for_status()
-    dag_runs = response.json()["dag_runs"]
     seen = set()
     schemas_ = []
     for dag_run in dag_runs:

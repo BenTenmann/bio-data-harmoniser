@@ -1,8 +1,7 @@
-import functools
 import os
 import tarfile
 import urllib.request
-from typing import Annotated, Final, Optional
+from typing import Annotated, Final
 
 import deltalake
 import pandas as pd
@@ -10,7 +9,7 @@ import typer
 from loguru import logger
 from sklearn import preprocessing
 
-from bio_data_harmoniser.core import llms, ontology
+from bio_data_harmoniser.core import llms, ontology, settings
 
 DEFAULT_ONTOLOGY_URL: Final[str] = (
     "https://data.monarchinitiative.org/monarch-kg-dev/latest/monarch-kg.tar.gz"
@@ -20,8 +19,8 @@ DEFAULT_NODES_FILENAME: Final[str] = "monarch-kg_nodes.tsv"
 
 def main(
     ontology_path: Annotated[
-        Optional[str], typer.Option(help="Path to the ontology to download")
-    ] = None,
+        str, typer.Option(help="Path to the ontology to download")
+    ] = settings.ontology.path,
     ontology_url: str = typer.Option(
         DEFAULT_ONTOLOGY_URL, help="URL of the ontology to download"
     ),
@@ -29,7 +28,6 @@ def main(
         DEFAULT_NODES_FILENAME, help="Filename of the ontology nodes file"
     ),
 ):
-    ontology_path = ontology_path or ontology.OntologySettings().path
     logger.info(f"Downloading ontology from {ontology_url}")
     filename, _ = urllib.request.urlretrieve(ontology_url)
     logger.info(f"Downloaded ontology to {filename}")

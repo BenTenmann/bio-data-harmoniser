@@ -8,15 +8,8 @@ import pandera as pa
 import pandera.typing as pat
 import pyarrow
 import pyarrow.compute as pc
-import pyarrow.dataset as ds
-import pydantic_settings
 
-
-class OntologySettings(pydantic_settings.BaseSettings):
-    path: str = "data/ontology"
-
-    class Config:
-        env_prefix = "ONTOLOGY_"
+from bio_data_harmoniser.core import settings
 
 
 class EntityType(str, enum.Enum):
@@ -171,5 +164,4 @@ class OntologyStore:
 
     @classmethod
     def default(cls) -> "OntologyStore":
-        settings = OntologySettings()
-        return cls.from_path(path=settings.path)
+        return cls.from_path(path=settings.ontology.path)

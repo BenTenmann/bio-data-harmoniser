@@ -1,18 +1,25 @@
-POETRY = poetry run
-DATA_DIR = data
-ONTOLOGY_DIR = $(DATA_DIR)/ontology
-
-ifneq (,$(wildcard .env))
-	include .env
-	export
-endif
+POETRY := poetry run
 
 BASE_PATH := $(shell pwd)
-ONTOLOGY_PATH := $(BASE_PATH)/backend/data/ontology
+BACKEND_PATH := $(BASE_PATH)/backend
+FRONTEND_PATH := $(BASE_PATH)/frontend
 PYTHONPATH := $(BASE_PATH):$(PYTHONPATH)
+
 AIRFLOW_HOME := $(BASE_PATH)/backend
-UPLOAD_DIR := $(BASE_PATH)/backend/data/uploads
+AIRFLOW_USERNAME := admin
+AIRFLOW_PASSWORD := admin
 AIRFLOW_OUTPUT_DIR := $(BASE_PATH)/backend/data/airflow
+
+FASTAPI_HOST := 0.0.0.0
+FASTAPI_PORT := 80
+FASTAPI_UPLOAD_DIR := $(BASE_PATH)/backend/data/uploads
+
+ONTOLOGY_PATH := $(BASE_PATH)/backend/data/ontology
+
+LLM_PROVIDER := openai
+LLM_MODEL := gpt-4o
+LLM_EMBEDDINGS_MODEL := mixedbread-ai/mxbai-embed-large-v1
+
 # see: https://stackoverflow.com/a/76405182
 NO_PROXY := *
 # see: https://stackoverflow.com/a/71525517
@@ -21,49 +28,79 @@ OBJC_DISABLE_INITIALIZE_FORK_SAFETY := YES
 OMP_NUM_THREADS := 1
 
 export BASE_PATH
-export ONTOLOGY_PATH
-export AIRFLOW_HOME
-export UPLOAD_DIR
-export AIRFLOW_OUTPUT_DIR
 export PYTHONPATH
+
+export AIRFLOW_HOME
+export AIRFLOW_OUTPUT_DIR
+
+export FASTAPI_HOST
+export FASTAPI_PORT
+export FASTAPI_UPLOAD_DIR
+
+export ONTOLOGY_PATH
+
+export LLM_PROVIDER
+export LLM_MODEL
+export LLM_EMBEDDINGS_MODEL
+
 export NO_PROXY
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY
 export OMP_NUM_THREADS
 
+ifneq (,$(wildcard .env))
+	include .env
+	export
+endif
+
+# --- Setup ---
+
+install_backend:
+	cd $(BACKEND_PATH) && $(POETRY) install
+
+install_frontend:
+	cd $(FRONTEND_PATH) && npm install
+
+install: install_backend install_frontend
 
 ingest-ontology:
 	@echo "Ingesting ontology"
-	$(POETRY) bio-data-harmoniser ingestion
+	cd $(BACKEND_PATH) && $(POETRY) bio-data-harmoniser ingest ontology
+
+setup: install ingest-ontology
+	@echo "Setup complete"
+
+# --- Development ---
 
 airflow_webserver:
-	cd backend/ && $(POETRY) airflow webserver --port 8080
+	cd $(BACKEND_PATH) && $(POETRY) airflow webserver --port 8080
 
 airflow_scheduler:
-	cd backend/ && $(POETRY) airflow scheduler 2>&1 | tee -a scheduler.log
+	cd $(BACKEND_PATH) && $(POETRY) airflow scheduler 2>&1 | tee -a scheduler.log
 
 airflow_worker:
-	cd backend/ && $(POETRY) airflow celery worker 2>&1 | tee -a celery.log
+	cd $(BACKEND_PATH) && $(POETRY) airflow celery worker 2>&1 | tee -a celery.log
 
 airflow: airflow_webserver airflow_scheduler airflow_worker
-	cd backend/ && $(POETRY) airflow celery stop
+	cd $(BACKEND_PATH) && $(POETRY) airflow celery stop
 
 backend_dev:
-	cd backend/ && $(POETRY) uvicorn bio_data_harmoniser.api.app:app \
-		--host 0.0.0.0 \
-		--port 80 \
+	cd $(BACKEND_PATH) && $(POETRY) uvicorn bio_data_harmoniser.api.app:app \
+		--host $(FASTAPI_HOST) \
+		--port $(FASTAPI_PORT) \
 		--reload
 
 frontend_dev:
-	cd frontend/ && npm run dev
+	cd $(FRONTEND_PATH) && npm run dev
 
 local: airflow backend_dev frontend_dev
 
 airflow_reset:
-	cd backend/ && \
+	cd $(BACKEND_PATH) && \
 		$(POETRY) airflow db reset -y && \
 		$(POETRY) airflow db init && \
 		$(POETRY) airflow users create \
-			--username admin \
+			--username $(AIRFLOW_USERNAME) \
+			--password $(AIRFLOW_PASSWORD) \
 			--firstname admin \
 			--lastname admin \
 			--email admin@example.com \
