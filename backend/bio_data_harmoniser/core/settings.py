@@ -6,7 +6,8 @@ LlmProvider = Literal["openai", "anthropic"]
 
 
 class AirflowSettings(pydantic_settings.BaseSettings):
-    base_url: str = "http://localhost:8080"
+    host: str = "localhost"
+    port: int = 8080
     username: str = "admin"
     password: str = "admin"
 
@@ -14,6 +15,10 @@ class AirflowSettings(pydantic_settings.BaseSettings):
 
     class Config:
         env_prefix = "AIRFLOW_"
+
+    @property
+    def base_url(self) -> str:
+        return f"http://{self.host}:{self.port}"
 
 
 class FastAPISettings(pydantic_settings.BaseSettings):

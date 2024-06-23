@@ -42,7 +42,8 @@ ${AIRFLOW_COMMAND} config list \
     >  "${AIRFLOW_HOME}/airflow.cfg"
 ${AIRFLOW_COMMAND} db migrate
 ${AIRFLOW_COMMAND} users create \
-    --username admin \
+    --username "${AIRFLOW_USERNAME:-admin}" \
+    --password "${AIRFLOW_PASSWORD:-admin}" \
     --firstname admin \
     --lastname admin \
     --role Admin \

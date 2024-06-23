@@ -26,6 +26,7 @@ class AirflowInterface:
             base_url=airflow_settings.base_url,
             username=airflow_settings.username,
             password=airflow_settings.password,
+            exception_cls=exception_cls,
         )
 
     @property

@@ -6,6 +6,8 @@ FRONTEND_PATH := $(BASE_PATH)/frontend
 PYTHONPATH := $(BASE_PATH):$(PYTHONPATH)
 
 AIRFLOW_HOME := $(BASE_PATH)/backend
+AIRFLOW_HOST := localhost
+AIRFLOW_PORT := 8080
 AIRFLOW_USERNAME := admin
 AIRFLOW_PASSWORD := admin
 AIRFLOW_OUTPUT_DIR := $(BASE_PATH)/backend/data/airflow
@@ -31,6 +33,8 @@ export BASE_PATH
 export PYTHONPATH
 
 export AIRFLOW_HOME
+export AIRFLOW_HOST
+export AIRFLOW_PORT
 export AIRFLOW_OUTPUT_DIR
 
 export FASTAPI_HOST
@@ -72,7 +76,9 @@ setup: install ingest-ontology
 # --- Development ---
 
 airflow_webserver:
-	cd $(BACKEND_PATH) && $(POETRY) airflow webserver --port 8080
+	cd $(BACKEND_PATH) && $(POETRY) airflow webserver \
+		--hostname $(AIRFLOW_HOST) \
+		--port $(AIRFLOW_PORT)
 
 airflow_scheduler:
 	cd $(BACKEND_PATH) && $(POETRY) airflow scheduler 2>&1 | tee -a scheduler.log
