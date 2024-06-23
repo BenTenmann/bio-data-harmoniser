@@ -126,12 +126,13 @@ class LoggingSession(pydantic.BaseModel):
     def get_session(cls) -> "LoggingSession":
         return cls._session or LoggingSession()
 
-    def check_node_is_set(self) -> None:
-        if self.node is None:
-            raise ValueError("Node is not set")
+    @property
+    def node_is_set(self) -> bool:
+        return self.node is not None
 
     def log_decision(self, decision: Decision) -> None:
-        self.check_node_is_set()
+        if not self.node_is_set:
+            return
         self.node.data.decisions.append(decision)
 
     def log_column_alignment_op(
@@ -139,7 +140,8 @@ class LoggingSession(pydantic.BaseModel):
         column_name: str,
         operation: Operation
     ) -> None:
-        self.check_node_is_set()
+        if not self.node_is_set:
+            return
         alignments = self.node.data.get_column_alignments_as_dict()
         if column_name not in alignments:
             self.log_decision(
@@ -155,12 +157,14 @@ class LoggingSession(pydantic.BaseModel):
             alignments[column_name].operations.append(operation)
 
     def log_status(self, status: TaskStatus) -> None:
-        self.check_node_is_set()
+        if not self.node_is_set:
+            return
         self.node.data.status = status
 
     def get_logged_mappings(self) -> list[utils.Mapping]:
-        self.check_node_is_set()
         mappings = []
+        if not self.node_is_set:
+            return mappings
         for decision in self.node.data.decisions:
             if not isinstance(decision.content, ColumnAlignment):
                 continue

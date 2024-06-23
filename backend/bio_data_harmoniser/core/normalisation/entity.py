@@ -277,6 +277,10 @@ class EntityNormaliser:
                 ontology.OntologyColumns.name,
             ]
         )
+        mapping = (
+            series.to_frame("mention")
+            .assign(xrefs=lambda df: df["mention"])
+        )
         available_prefixes = _get_available_curie_prefixes(xref_mapping[self.store.columns.xrefs])
         if available_prefixes:
             logger.debug(f"Available prefixes for series are {available_prefixes}")
@@ -285,11 +289,13 @@ class EntityNormaliser:
             )
             if prefix is not None:
                 logger.debug(f"Adding prefix {prefix} to series")
-                series = f"{prefix}:" + series.astype(str)
+                mapping["xrefs"] = f"{prefix}:" + series.astype(str)
             else:
                 logger.debug("No prefix selected for series")
         out = _finalise_output(
-            xref_mapping.rename(columns={self.store.columns.xrefs: "mention"})
+            xref_mapping.merge(mapping, on="xrefs")
+            .drop_duplicates()
+            .drop(columns=["xrefs"])
             .assign(score=1.0),
             series,
             self.types,
