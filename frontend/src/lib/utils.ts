@@ -6,6 +6,12 @@ const statusColors = {
 
 export { statusColors };
 
+export enum QueryStatus {
+  RUNNING = "running",
+  SUCCESS = "success",
+  FAILED = "failed",
+}
+
 export async function getDagRun(id: string) {
   const res = await fetch(
     "http://localhost:8080/api/v1/dags/data_extraction/dagRuns/" + id,
