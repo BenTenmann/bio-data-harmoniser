@@ -13,51 +13,57 @@ import {
   ArrowLongRightIcon,
   ArrowsPointingInIcon,
 } from "@heroicons/react/24/outline";
-import {
-  QuestionMarkCircleIcon
-} from "@heroicons/react/20/solid";
+import { QuestionMarkCircleIcon } from "@heroicons/react/20/solid";
 import { Handle, Position } from "reactflow";
 import { type Mapping } from "@/lib/mapping_table";
-import { Dialog, DialogActions, DialogBody, DialogDescription, DialogTitle } from "@/components/dialog";
+import {
+  Dialog,
+  DialogActions,
+  DialogBody,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/dialog";
 import { Code } from "@/components/text";
-import {Button} from "@/components/button";
+import { Button } from "@/components/button";
 import { Link } from "@/components/link";
 
 type RenameOperation = {
   original_name: string;
   new_name: string;
-}
+};
 
 type MappingType = "free_text" | "xref";
 
 type MappingOperation = {
   type: MappingType;
   mappings: Mapping[];
-}
+};
 
 type DerivedInferenceOperation = {
   type: "derived";
   data: null;
-}
+};
 
 type RagResponse = {
   answer: string;
   references: {
     text: string;
     url?: string;
-  }
-}
+  };
+};
 
 type ExtractedInferenceOperation = {
   type: "extracted";
   data: RagResponse;
-}
+};
 
-type InferenceOperation = DerivedInferenceOperation | ExtractedInferenceOperation;
+type InferenceOperation =
+  | DerivedInferenceOperation
+  | ExtractedInferenceOperation;
 
 type SetValueOperation = {
   value: any;
-}
+};
 
 type Operation =
   | RenameOperation
@@ -84,12 +90,12 @@ function isSetValueOp(op: Operation): op is SetValueOperation {
 type ColumnAlignment = {
   column_name: string;
   operations: Operation[];
-}
+};
 
 type Decision = {
   type: string;
   content: string | ColumnAlignment;
-}
+};
 
 export type TaskType = "retrieve" | "download" | "extract" | "process";
 
@@ -100,7 +106,7 @@ export type NodeMetadata = {
   logs: string[];
   decisions: Decision[];
   duration: number;
-}
+};
 
 const iconLookup = {
   retrieve: LinkIcon,
@@ -146,13 +152,20 @@ function DecisionIcon({ type }: { type: string }) {
 function InferenceComponent({ inference }: { inference: InferenceOperation }) {
   switch (inference.type) {
     case "derived":
-      return <div className="flex flex-row items-center space-x-2">
-        <span className="text-sm">The column was derived from other columns</span>
-      </div>;
+      return (
+        <div className="flex flex-row items-center space-x-2">
+          <span className="text-sm">
+            The column was derived from other columns
+          </span>
+        </div>
+      );
     case "extracted":
-      return <div className="flex flex-row items-center space-x-2">
-        <span className="text-sm">The column was extracted from the context: </span>
-        <span className="text-sm truncate">{inference.data.answer}</span>
+      return (
+        <div className="flex flex-row items-center space-x-2">
+          <span className="text-sm">
+            The column was extracted from the context:{" "}
+          </span>
+          <span className="truncate text-sm">{inference.data.answer}</span>
           {/*{*/}
           {/*  inference.data.references.url ? (*/}
           {/*    <Link href={inference.data.references.url}>*/}
@@ -162,71 +175,113 @@ function InferenceComponent({ inference }: { inference: InferenceOperation }) {
           {/*    <span className="text-sm">(see {inference.data.references.text})</span>*/}
           {/*  )*/}
           {/*}*/}
-        <QuestionMarkCircleIcon className="h-4 w-4"/>
-      </div>;
+          <QuestionMarkCircleIcon className="h-4 w-4" />
+        </div>
+      );
     default:
-      return <div className="flex flex-row items-center space-x-2">
-        <span className="text-sm">unknown inference type</span>
-      </div>;
+      return (
+        <div className="flex flex-row items-center space-x-2">
+          <span className="text-sm">unknown inference type</span>
+        </div>
+      );
   }
 }
 
-function DecisionComponent({ decision, runId }: { decision: Decision, runId: string }) {
+function DecisionComponent({
+  decision,
+  runId,
+}: {
+  decision: Decision;
+  runId: string;
+}) {
   const [showDialog, setShowDialog] = React.useState(false);
   return (
-    <div className="flex flex-row items-center space-x-2 hover:cursor-pointer hover:text-indigo-500" onClick={() => setShowDialog(true)}>
+    <div
+      className="flex flex-row items-center space-x-2 hover:cursor-pointer hover:text-indigo-500"
+      onClick={() => setShowDialog(true)}
+    >
       <DecisionIcon type={decision.type} />
       <span className="text-sm">
-        {
-          typeof decision.content === "string" ? decision.content : (
-              <div className="flex flex-row items-center space-x-2">
-                <span className="text-sm">{decision.content.column_name}</span>
-                {/*<span className="text-sm">{decision.content.value}</span>*/}
-                <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
-                  <DialogTitle>alignment of column <Code>{decision.content.column_name}</Code></DialogTitle>
-                  <DialogDescription>
-                    {
-                      decision.content.operations.map((op, index) => (
-                        isRenameOp(op) ? (
-                          <div key={index} className="flex flex-row items-center space-x-2">
-                            <span className="text-sm">Column was renamed: </span>
-                            <span className="text-sm">{op.original_name}</span>
-                            <ArrowLongRightIcon className="h-4 w-4" />
-                            <span className="text-sm">{op.new_name}</span>
-                          </div>
-                        ) : isMappingOp(op) ? (
-                          <div key={index} className="flex flex-row items-center space-x-2">
-                            <span className="text-sm">Column values were mapped (<Link href={`/ingestion/${runId}/mapping`}>see here</Link>): </span>
-                            <span className="text-sm">{op.mappings.length} unique mappings</span>
-                          </div>
-                        ) : isInferenceOp(op) ? (
-                          InferenceComponent({ inference: op })
-                        ) : isSetValueOp(op) ? (
-                          <div key={index} className="flex flex-row items-center space-x-2">
-                            <span className="text-sm">Column values were set to default: </span>
-                            <span className="text-sm"><Code>{String(op.value)}</Code></span>
-                          </div>
-                        ) : (
-                          <div key={index} className="flex flex-row items-center space-x-2">
-                            <span className="text-sm">unknown operation</span>
-                          </div>
-                        )
-                      ))
-                    }
-                  </DialogDescription>
-                  <DialogActions>
-                    <Button outline onClick={() => setShowDialog(false)}>Close</Button>
-                  </DialogActions>
-                </Dialog>
-              </div>
-          )
-        }
+        {typeof decision.content === "string" ? (
+          decision.content
+        ) : (
+          <div className="flex flex-row items-center space-x-2">
+            <span className="text-sm">{decision.content.column_name}</span>
+            {/*<span className="text-sm">{decision.content.value}</span>*/}
+            <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
+              <DialogTitle>
+                alignment of column <Code>{decision.content.column_name}</Code>
+              </DialogTitle>
+              <DialogDescription>
+                {decision.content.operations.map((op, index) =>
+                  isRenameOp(op) ? (
+                    <div
+                      key={index}
+                      className="flex flex-row items-center space-x-2"
+                    >
+                      <span className="text-sm">Column was renamed: </span>
+                      <span className="text-sm">{op.original_name}</span>
+                      <ArrowLongRightIcon className="h-4 w-4" />
+                      <span className="text-sm">{op.new_name}</span>
+                    </div>
+                  ) : isMappingOp(op) ? (
+                    <div
+                      key={index}
+                      className="flex flex-row items-center space-x-2"
+                    >
+                      <span className="text-sm">
+                        Column values were mapped (
+                        <Link href={`/ingestion/${runId}/mapping`}>
+                          see here
+                        </Link>
+                        ):{" "}
+                      </span>
+                      <span className="text-sm">
+                        {op.mappings.length} unique mappings
+                      </span>
+                    </div>
+                  ) : isInferenceOp(op) ? (
+                    InferenceComponent({ inference: op })
+                  ) : isSetValueOp(op) ? (
+                    <div
+                      key={index}
+                      className="flex flex-row items-center space-x-2"
+                    >
+                      <span className="text-sm">
+                        Column values were set to default:{" "}
+                      </span>
+                      <span className="text-sm">
+                        <Code>{String(op.value)}</Code>
+                      </span>
+                    </div>
+                  ) : (
+                    <div
+                      key={index}
+                      className="flex flex-row items-center space-x-2"
+                    >
+                      <span className="text-sm">unknown operation</span>
+                    </div>
+                  ),
+                )}
+              </DialogDescription>
+              <DialogActions>
+                <Button outline onClick={() => setShowDialog(false)}>
+                  Close
+                </Button>
+              </DialogActions>
+            </Dialog>
+          </div>
+        )}
       </span>
     </div>
   );
 }
 
-export const CustomNode = ({ data }: { data: NodeMetadata & { runId: string } }) => {
+export const CustomNode = ({
+  data,
+}: {
+  data: NodeMetadata & { runId: string };
+}) => {
   const [selected, setSelected] = React.useState(false);
   return (
     <>
@@ -246,25 +301,21 @@ export const CustomNode = ({ data }: { data: NodeMetadata & { runId: string } })
           </span>
         </div>
       </div>
-      {
-        selected && (
-          <div className="flex flex-col items-center space-x-2 bg-gray-100 p-2 rounded-b-lg border-b border-gray-400">
-            <div className="flex flex-row items-center space-x-2">
-              <StatusIcon status={data.status} />
-              <span className="text-sm">in {data.duration}s</span>
-            </div>
-            <ul className="flex flex-col">
-              {
-                data.decisions.map((decision, index) => (
-                  <div key={index} className="flex flex-row items-center space-x-2">
-                    <DecisionComponent decision={decision} runId={data.runId} />
-                  </div>
-                ))
-              }
-            </ul>
+      {selected && (
+        <div className="flex flex-col items-center space-x-2 rounded-b-lg border-b border-gray-400 bg-gray-100 p-2">
+          <div className="flex flex-row items-center space-x-2">
+            <StatusIcon status={data.status} />
+            <span className="text-sm">in {data.duration}s</span>
           </div>
-        )
-      }
+          <ul className="flex flex-col">
+            {data.decisions.map((decision, index) => (
+              <div key={index} className="flex flex-row items-center space-x-2">
+                <DecisionComponent decision={decision} runId={data.runId} />
+              </div>
+            ))}
+          </ul>
+        </div>
+      )}
       <Handle type="target" position={Position.Top} />
       <Handle type="source" position={Position.Bottom} />
     </>

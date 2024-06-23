@@ -89,10 +89,10 @@ export default function IngestionDashboard({ datum, children }) {
               disabled: datum.status === "running",
             },
           ].map((tab) => {
-              return {
-                  ...tab,
-                  current: currentPath === tab.href,
-              }
+            return {
+              ...tab,
+              current: currentPath === tab.href,
+            };
           })}
         ></Tabs>
         {children}

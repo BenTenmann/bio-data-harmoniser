@@ -23,20 +23,20 @@ type LoggedNode = {
   name: string;
   data: NodeMetadata;
   upstream_node_ids: string[];
-}
+};
 
 type DataExtractionDag = {
   nodes: LoggedNode[];
-}
+};
 
 const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
 
-function DAGCore({ dag, runId }: { dag: DataExtractionDag, runId: string }) {
+function DAGCore({ dag, runId }: { dag: DataExtractionDag; runId: string }) {
   const [nodes, setNodes, onNodesChange] = useNodesState(
     dag.nodes.map((node, index) => ({
       id: node.id,
       type: "customNode",
-      data: {...node.data, runId: runId},
+      data: { ...node.data, runId: runId },
       position: { x: 0, y: index * 100 },
     })),
   );
@@ -90,7 +90,7 @@ function DAGCore({ dag, runId }: { dag: DataExtractionDag, runId: string }) {
   );
 }
 
-export function DAG({ dag, runId }: { dag: DataExtractionDag, runId: string }) {
+export function DAG({ dag, runId }: { dag: DataExtractionDag; runId: string }) {
   return (
     <div className="h-screen w-screen shadow-inner">
       <ReactFlowProvider>

@@ -2,11 +2,7 @@
 import React from "react";
 import CustomEditor from "@/components/editor";
 import { Text } from "@/components/text";
-import {
-  getQueryStatus,
-  getSqlResults,
-  submitSql,
-} from "@/lib/sql";
+import { getQueryStatus, getSqlResults, submitSql } from "@/lib/sql";
 import { QueryStatus } from "@/lib/utils";
 import {
   Table,

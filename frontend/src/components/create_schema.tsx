@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import Shell from "@/components/shell";
 import {
   Field,
   FieldGroup,
@@ -62,7 +61,11 @@ function SchemaColumn({
   disabled: boolean;
   removeColumn: (index: number) => void;
   handleColumnChange: (index: number, propName: string, value: any) => void;
-  handleColumnDataTypeChange: (columnIndex: number, paramIndex: number, choice: DataTypeParamOption) => void;
+  handleColumnDataTypeChange: (
+    columnIndex: number,
+    paramIndex: number,
+    choice: DataTypeParamOption,
+  ) => void;
   dataTypes: DataType[];
   dataTypesLookup: { [key: string]: DataType };
 }) {
@@ -77,7 +80,9 @@ function SchemaColumn({
               defaultValue={column.name}
               name={`field_name_${index}`}
               disabled={disabled}
-              onChange={(e) => handleColumnChange(index, "name", e.target.value)}
+              onChange={(e) =>
+                handleColumnChange(index, "name", e.target.value)
+              }
             />
           </Field>
           <Field>
@@ -101,10 +106,15 @@ function SchemaColumn({
                   <Field key={paramIndex} className="p-2">
                     <Label>{param.name}</Label>
                     {!param.options_ordered ? (
-                      <Listbox onChange={(e) => handleColumnDataTypeChange(
-                          index,
-                          paramIndex,
-                          param.options.find((o) => o.name === e))}>
+                      <Listbox
+                        onChange={(e) =>
+                          handleColumnDataTypeChange(
+                            index,
+                            paramIndex,
+                            param.options.find((o) => o.name === e)!,
+                          )
+                        }
+                      >
                         {param.options.map((option, index) => (
                           <ListboxOption key={index} value={option.name}>
                             {option.name}
@@ -116,10 +126,13 @@ function SchemaColumn({
                         className="mt-4 flex gap-6 sm:gap-8"
                         key={paramIndex}
                         defaultValue={param.default}
-                        onChange={(e) => handleColumnDataTypeChange(
-                          index,
-                          paramIndex,
-                          param.options.find((o) => o.name === e))}
+                        onChange={(e) =>
+                          handleColumnDataTypeChange(
+                            index,
+                            paramIndex,
+                            param.options.find((o) => o.name === e)!,
+                          )
+                        }
                       >
                         {param.options.map((option, index) => (
                           <Headless.Field
@@ -254,35 +267,33 @@ export function CreateSchema({
   };
 
   const handleColumnDataTypeChange = (
-      columnIndex: number,
-      paramIndex: number,
-      choice: DataTypeParamOption
-    ) => {
+    columnIndex: number,
+    paramIndex: number,
+    choice: DataTypeParamOption,
+  ) => {
     setColumns(
-        columns.map((column, i) => {
-          if (columnIndex === i) {
-            return {
-              ...column,
-              data_type: {
-                ...column.data_type,
-                parameters: column.data_type.parameters!.map(
-                    (param, j) => {
-                      if (paramIndex === j) {
-                        return {
-                          ...param,
-                          choice: choice
-                        }
-                      }
-                      return param;
-                    }
-                )
-              }
-            }
-          }
-          return column;
-        })
-    )
-  }
+      columns.map((column, i) => {
+        if (columnIndex === i) {
+          return {
+            ...column,
+            data_type: {
+              ...column.data_type,
+              parameters: column.data_type.parameters!.map((param, j) => {
+                if (paramIndex === j) {
+                  return {
+                    ...param,
+                    choice: choice,
+                  };
+                }
+                return param;
+              }),
+            },
+          };
+        }
+        return column;
+      }),
+    );
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -297,20 +308,17 @@ export function CreateSchema({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     console.log(formData);
-    const res = await fetch(
-      "http://0.0.0.0:80/schemas",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.schema_name,
-          description: formData.schema_description,
-          columns: formData.columns
-        }),
+    const res = await fetch("http://0.0.0.0:80/schemas", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
       },
-    );
+      body: JSON.stringify({
+        name: formData.schema_name,
+        description: formData.schema_description,
+        columns: formData.columns,
+      }),
+    });
     if (res.ok) {
       console.log("Schema created");
       router.push("/dashboard/data-model");

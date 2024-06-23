@@ -16,41 +16,47 @@ import { Button } from "@/components/button";
 import { Radio } from "@/components/radio";
 import * as Headless from "@headlessui/react";
 
-function FileUpload({ file, handleFileChange }: { file: File | null, handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void }) {
+function FileUpload({
+  file,
+  handleFileChange,
+}: {
+  file: File | null;
+  handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
   return (
     <Field>
       <div className="col-span-full">
         <div className="mt-2 flex justify-center rounded-lg border border-dashed border-gray-900/25 px-6 py-10">
-          {file === null ? (<div className="text-center">
-            <ArrowUpTrayIcon
+          {file === null ? (
+            <div className="text-center">
+              <ArrowUpTrayIcon
                 className="mx-auto h-12 w-12 text-gray-300"
                 aria-hidden="true"
-            />
-            <div className="mt-4 flex text-sm leading-6 text-gray-600">
-              <label
+              />
+              <div className="mt-4 flex text-sm leading-6 text-gray-600">
+                <label
                   htmlFor="file-upload"
                   className="relative cursor-pointer rounded-md bg-white font-semibold text-indigo-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-indigo-600 focus-within:ring-offset-2 hover:text-indigo-500"
-              >
-                <span>Upload a file</span>
-                <input
+                >
+                  <span>Upload a file</span>
+                  <input
                     id="file-upload"
                     name="file-upload"
                     type="file"
                     className="sr-only"
                     onChange={handleFileChange}
-                />
-              </label>
-              <p className="pl-1">or drag and drop</p>
-            </div>
-            <p className="text-xs leading-5 text-gray-600">
-              CSV, TSV, PARQUET up to 200MB
-            </p>
-          </div>) : (
-              <div className="text-center">
-                <p className="text-sm leading-6 text-gray-600">
-                  {file.name}
-                </p>
+                  />
+                </label>
+                <p className="pl-1">or drag and drop</p>
               </div>
+              <p className="text-xs leading-5 text-gray-600">
+                CSV, TSV, PARQUET up to 200MB
+              </p>
+            </div>
+          ) : (
+            <div className="text-center">
+              <p className="text-sm leading-6 text-gray-600">{file.name}</p>
+            </div>
           )}
         </div>
       </div>
@@ -90,7 +96,7 @@ export default function CreateIngestionPage() {
         url: value,
       }),
     });
-    const updateData: {url: string, name?: string, description?: string} = {
+    const updateData: { url: string; name?: string; description?: string } = {
       url: value,
     };
     if (res.status === 200) {
@@ -109,24 +115,21 @@ export default function CreateIngestionPage() {
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const {files} = e.target;
+    const { files } = e.target;
     const file = files![0];
     const fileFormData = new FormData();
-    fileFormData.append('file', file);
-    const response = await fetch(
-        `http://0.0.0.0:80/ingestion/file-upload`,
-        {
-          method: 'POST',
-          body: fileFormData,
-        }
-    )
-    const jsonData: {url: string} = await response.json();
+    fileFormData.append("file", file);
+    const response = await fetch(`http://0.0.0.0:80/ingestion/file-upload`, {
+      method: "POST",
+      body: fileFormData,
+    });
+    const jsonData: { url: string } = await response.json();
     setFormData((prevState) => ({
       ...prevState,
       url: jsonData.url,
     }));
     setFile(file);
-  }
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -223,10 +226,7 @@ export default function CreateIngestionPage() {
           <Button outline href="/">
             Cancel
           </Button>
-          <Button
-            type="submit"
-            disabled={ingestionType === undefined}
-          >
+          <Button type="submit" disabled={ingestionType === undefined}>
             Create
           </Button>
         </div>

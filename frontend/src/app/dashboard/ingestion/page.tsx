@@ -12,7 +12,7 @@ type IngestionParams = {
   name: string;
   description: string;
   url: string;
-}
+};
 
 type Ingestion = {
   id: string;
@@ -27,11 +27,11 @@ async function getIngestions(): Promise<Ingestion[]> {
   return response.json();
 }
 
-function IngestionPage({
-  ingestions,
-}: {
-  ingestions: Ingestion[];
-}) {
+function getStatusColor(status: keyof typeof statusColors) {
+  return statusColors[status];
+}
+
+function IngestionPage({ ingestions }: { ingestions: Ingestion[] }) {
   return (
     <div>
       <div className="flex items-center justify-between">
@@ -42,18 +42,19 @@ function IngestionPage({
           <PlusIcon className="text-white" /> Create
         </Button>
       </div>
-      {ingestions.length > 0 ? (<ul role="list" className="divide-y divide-gray-100">
-        {ingestions.map((ingestion) => (
+      {ingestions.length > 0 ? (
+        <ul role="list" className="divide-y divide-gray-100">
+          {ingestions.map((ingestion) => (
             <li
-                key={ingestion.id}
-                className="relative flex justify-between gap-x-6 px-4 py-5 hover:bg-gray-50 sm:px-6 lg:px-8"
+              key={ingestion.id}
+              className="relative flex justify-between gap-x-6 px-4 py-5 hover:bg-gray-50 sm:px-6 lg:px-8"
             >
               <div className="flex min-w-0 gap-x-4">
                 {/*<img className="h-12 w-12 flex-none rounded-full bg-gray-50" src={person.imageUrl} alt=""/>*/}
                 <div className="min-w-0 flex-auto">
                   <p className="text-sm font-semibold leading-6 text-gray-900">
                     <a href={`/dashboard/ingestion/${ingestion.id}/tasks`}>
-                      <span className="absolute inset-x-0 -top-px bottom-0"/>
+                      <span className="absolute inset-x-0 -top-px bottom-0" />
                       {ingestion.params.name}
                     </a>
                   </p>
@@ -71,10 +72,10 @@ function IngestionPage({
                   </p>
                   <div className="mt-1 flex items-center gap-x-1.5">
                     <div
-                        className={`flex-none rounded-full bg-${statusColors[ingestion.status]}-500/20 p-1`}
+                      className={`flex-none rounded-full bg-${getStatusColor(ingestion.status)}-500/20 p-1`}
                     >
                       <div
-                          className={`h-1.5 w-1.5 rounded-full bg-${statusColors[ingestion.status]}-500`}
+                        className={`h-1.5 w-1.5 rounded-full bg-${getStatusColor(ingestion.status)}-500`}
                       />
                     </div>
                     <p className="text-xs leading-5 text-gray-500">
@@ -87,19 +88,18 @@ function IngestionPage({
                   {/*</Badge>*/}
                 </div>
                 <ChevronRightIcon
-                    className="h-5 w-5 flex-none text-gray-400"
-                    aria-hidden="true"
+                  className="h-5 w-5 flex-none text-gray-400"
+                  aria-hidden="true"
                 />
               </div>
             </li>
-        ))}
-      </ul>) : (
-          <div className="flex flex-row items-center justify-center h-64 gap-x-2">
-            <ExclamationCircleIcon className="h-6 w-6 text-gray-400" />
-            <Text className="text-gray-500">
-              No ingestions found
-            </Text>
-          </div>
+          ))}
+        </ul>
+      ) : (
+        <div className="flex h-64 flex-row items-center justify-center gap-x-2">
+          <ExclamationCircleIcon className="h-6 w-6 text-gray-400" />
+          <Text className="text-gray-500">No ingestions found</Text>
+        </div>
       )}
     </div>
   );
@@ -107,7 +107,5 @@ function IngestionPage({
 
 export default async function Home() {
   const ingestions = await getIngestions();
-  return (
-    <IngestionPage ingestions={ingestions} />
-  );
+  return <IngestionPage ingestions={ingestions} />;
 }

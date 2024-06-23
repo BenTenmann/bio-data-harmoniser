@@ -7,9 +7,7 @@ import "tailwindcss/tailwind.css";
 export const dynamic = "force-dynamic";
 
 async function getDag(runId: string) {
-  const response = await fetch(
-      `http://0.0.0.0:80/dag/${runId}`,
-  )
+  const response = await fetch(`http://0.0.0.0:80/dag/${runId}`);
   if (!response.ok) {
     throw new Error("Failed to fetch DAG");
   }
@@ -22,7 +20,5 @@ export default async function TasksPage({
   params: { id: string };
 }) {
   const dag = await getDag(params.id);
-  return (
-      <DAG dag={dag} runId={params.id} />
-  );
+  return <DAG dag={dag} runId={params.id} />;
 }
