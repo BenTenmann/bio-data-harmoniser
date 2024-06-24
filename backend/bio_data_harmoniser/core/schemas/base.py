@@ -1,8 +1,9 @@
 import functools
 import re
 from dataclasses import dataclass
+import operator
 from pathlib import Path
-from typing import Any, Callable, Literal, Protocol, TypeVar, runtime_checkable
+from typing import Any, Callable, Literal, Protocol, Sequence, TypeVar, runtime_checkable
 
 import networkx as nx
 import pandas as pd
@@ -177,6 +178,7 @@ class ColumnInference(pydantic.BaseModel):
 class ColumnMetadata(pydantic.BaseModel):
     aliases: list[str] = pydantic.Field(default_factory=list)
     column_inferences: list[ColumnInference] = pydantic.Field(default_factory=list)
+    always_inferred: bool = False
 
     class Config:
         arbitrary_types_allowed = True
@@ -252,20 +254,45 @@ def get_column_description(column: pa.Column) -> str:
     return description or ""
 
 
+def format_columns(columns: Sequence[Any]) -> str:
+    return "\n".join(map("<column>{}</column>".format, map(str, columns)))
+
+
+def format_dataframe(dataframe: pd.DataFrame) -> str:
+    return re.sub(" +", " ", dataframe.iloc[:3].to_xml()).split("\n", 1)[1]
+
+
+def format_target_column(column: pa.Column) -> str:
+    dtype = column.dtype
+    dtype_str = str(dtype)
+    if isinstance(dtype, dt.EntityType):
+        dtype_str = f"Entity({', '.join(dtype.types)})"
+    return (
+        f"<name>{column.name}</name>"
+        f"\n<type>{dtype_str}</type>"
+        f"\n<description>{get_column_description(column)}</description>"
+    )
+
+
+def get_reformatted_columns_dataframe_and_mapping(dataframe: pd.DataFrame) -> tuple[pd.DataFrame,  dict[str, str]]:
+    dataframe = dataframe.copy()
+    original_columns = dataframe.columns
+    dataframe.columns = [utils.to_snake_case(x) for x in dataframe.columns]
+    column_map = dict(zip(dataframe.columns, original_columns))
+    return dataframe, column_map
+
+
 def get_column_name(
     dataframe: pd.DataFrame,
     column: pa.Column,
     llm: BaseLanguageModel,
 ) -> str | None:
-    dataframe = dataframe.head(3).copy()
-    original_columns = dataframe.columns
-    dataframe.columns = [utils.to_snake_case(x) for x in dataframe.columns]
-    column_map = dict(zip(dataframe.columns, original_columns))
+    dataframe = dataframe.head(3)
+    dataframe, column_map = get_reformatted_columns_dataframe_and_mapping(dataframe)
 
     # TODO: we need to tune this prompt to make sure we don't get false positives
     prompt_template = """
     Given a dataframe and a target column, return the name of the column in the dataframe that matches the target column. If there is no match or you are unsure, answer with an empty string.
-    Note that the target column may sometimes request a column with IDs, but the dataframe only has a column with free-text values (e.g. the target column is `tissue_id` but the dataframe only has `tissue`). In this case, you should return the name of the column that contains the free-text values (e.g. `tissue`).
 
     Here are the column names in the dataframe:
     
@@ -283,17 +310,89 @@ def get_column_name(
     </target_column>
     
     Provide just the name of the column that matches the target column and nothing else. If there is no match or you are unsure, answer with an empty string.
-    Remember that if the target column requests IDs, but the dataframe only has free-text values, you should return the name of the column that contains the free-text values.
     """
-    df_xml: str = re.sub(" +", " ", dataframe.iloc[:3].to_xml()).split("\n", 1)[1]
-    desc = get_column_description(column)
     prompt = llms.clean_prompt_formatting(prompt_template).format(
-        columns="\n".join(map("<column>{}</column>".format, dataframe.columns)),
-        df_xml=df_xml,
-        target_column=f"<name>{column.name}</name>\n<description>{desc}</description>",
+        columns=format_columns(dataframe.columns),
+        df_xml=format_dataframe(dataframe),
+        target_column=format_target_column(column),
     )
     llm_response: str = llm.predict(prompt)
     return column_map.get(llm_response)
+
+
+def contains_free_text_version_of_column(dataframe: pd.DataFrame, column: pa.Column, llm: BaseLanguageModel) -> bool:
+    # TODO: we should create some tests / benchmarks for these functions
+    # only entity types have free text versions
+    if not isinstance(column.dtype, dt.EntityType):
+        return False
+    dataframe = dataframe.head(3)
+    dataframe, column_map = get_reformatted_columns_dataframe_and_mapping(dataframe)
+    prompt = """
+    Given a dataframe and a target column, your task is to determine if the dataframe contains a free-text version of the target column.
+    For example, if the target column is `tissue_id` and the dataframe contains a column containing free-text mentions of tissues, then the dataframe contains a free-text version of the target column.
+    The same is true for other biological concepts, such as diseases, cell types and pathways.
+
+    Here are the column names in the dataframe:
+
+    <columns>
+    {columns}
+    </columns>
+
+    Here are the first few rows of the dataframe, as XML:
+    {df_xml}
+
+    Here is the target column:
+
+    <target_column>
+    {target_column}
+    </target_column>
+
+    Just answer with "yes" if the dataframe contains a free-text version of the target column, and "no" otherwise. Do not explain your answer.
+    """
+    response = llm.predict(
+        llms.clean_prompt_formatting(prompt).format(
+            columns=format_columns(dataframe.columns),
+            df_xml=format_dataframe(dataframe),
+            target_column=format_target_column(column),
+        )
+    )
+    logger.info(f"LLM response: {response!r}")
+    return "yes" in re.sub(r"[^A-Za-z]", "", response).lower()
+
+
+def get_free_text_column_name(dataframe: pd.DataFrame, column: pa.Column, llm: BaseLanguageModel) -> str | None:
+    dataframe = dataframe.head(3)
+    dataframe, column_map = get_reformatted_columns_dataframe_and_mapping(dataframe)
+    prompt = """
+    Given a dataframe and a target column, your task is to determine the name of the column in the dataframe that contains free-text mentions of the target column.
+    For example, if the target column is `tissue_id` and the dataframe contains a column containing free-text mentions of tissues, then the name of the column in the dataframe that contains free-text mentions of tissues is `tissue`.
+    The same is true for other biological concepts, such as diseases, cell types and pathways.
+
+    Here are the column names in the dataframe:
+
+    <columns>
+    {columns}
+    </columns>
+
+    Here are the first few rows of the dataframe, as XML:
+    {df_xml}
+
+    Here is the target column:
+
+    <target_column>
+    {target_column}
+    </target_column>
+
+    Provide just the name of the column that contains free-text mentions of the target column and nothing else. If there is no match or you are unsure, answer with an empty string.
+    """
+    response = llm.predict(
+        llms.clean_prompt_formatting(prompt).format(
+            columns=format_columns(dataframe.columns),
+            df_xml=format_dataframe(dataframe),
+            target_column=format_target_column(column),
+        )
+    )
+    return column_map.get(response)
 
 
 def align_dataframe_to_schema(
@@ -314,8 +413,12 @@ def align_dataframe_to_schema(
     logger.info("Mapping column names to required schema and identifying missing columns")
     column: pa.Column
     for column in schema.columns.values():
-        logger.info(f"Looking for column {column.name!r}")
         metadata = ColumnMetadata.from_column(column)
+        if metadata.always_inferred:
+            logger.info(f"Always inferring column {column.name!r}; skipping")
+            missing_columns.append(column)
+            continue
+        logger.info(f"Looking for column {column.name!r}")
         for alias in metadata.aliases:
             if alias in dataframe.columns:
                 logger.info(f"Found column {alias!r} in dataframe for column {column.name!r}")
@@ -343,6 +446,23 @@ def align_dataframe_to_schema(
                     )
                 )
                 continue
+            elif contains_free_text_version_of_column(dataframe, column, llm):
+                logger.info(f"{column.name!r} has a free-text version in the dataframe")
+                free_text_column_name = get_free_text_column_name(dataframe, column, llm)
+                if free_text_column_name is not None:
+                    column_name_mapping[free_text_column_name] = column.name
+                    log_session.log_column_alignment_op(
+                        column_name=free_text_column_name,
+                        operation=logging.RenameOperation(
+                            original_name=free_text_column_name,
+                            new_name=free_text_column_name,
+                        )
+                    )
+                    continue
+                logger.warning(
+                    f"{column.name!r} has a free-text version in the dataframe, "
+                    f"but no free-text column name was found. See columns: {sorted(dataframe.columns)}"
+                )
             logger.info(f"No column name found for column {column.name!r}")
             missing_columns.append(column)
     dataframe = dataframe.rename(columns=column_name_mapping)
@@ -451,6 +571,7 @@ def dataset_id_column() -> pa.Column:
                         __inferred=Path(session.file_path).stem
                     )["__inferred"],
                 ),
-            ]
+            ],
+            always_inferred=True,
         ).dict(),
     )

@@ -54,7 +54,7 @@ ENTITY_TYPE_DESCRIPTIONS: Final[dict[EntityType, str]] = {
     EntityType.Disease: "A disorder of structure or function, especially one that produces specific signs, phenotypes or symptoms or that affects a specific location and is not simply a direct result of physical injury. A disposition to undergo pathological processes that exists in an organism because of one or more disorders in that organism.",
     EntityType.Pathway: "A pathway is a series of chemical reactions that occur in a living organism.",
     EntityType.Cell: "A cell is the basic structural and functional unit of an organism.",
-    EntityType.GrossAnatomicalStructure: "A gross anatomical structure is a part of the body.",
+    EntityType.GrossAnatomicalStructure: "A gross anatomical structure is a part of the body (i.e. a tissue, organ, etc.).",
     EntityType.AnatomicalEntity: "An anatomical entity is a part of the body.",
     EntityType.CellularComponent: "A location in or around a cell.",
     EntityType.MolecularEntity: "A molecular entity is a chemical entity composed of individual or covalently bonded atoms.",

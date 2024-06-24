@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, cast
 
 import airflow
 import pandas as pd
+import pendulum
 import pydantic
 from airflow.decorators import task, task_group
 from airflow.exceptions import AirflowSkipException
@@ -137,6 +138,12 @@ with airflow.DAG(
     start_date=airflow.utils.dates.days_ago(1),
     is_paused_upon_creation=False,
     params=pydantic_to_airflow_params(DataExtractionDagParams()),
+    default_args={
+        "retries": 3,
+        "retry_delay": pendulum.duration(seconds=2),
+        "retry_exponential_backoff": True,
+        "max_retry_delay": pendulum.duration(minutes=5),
+    },
 ) as data_extraction:
 
     @task
