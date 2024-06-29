@@ -16,6 +16,8 @@ import { Button } from "@/components/button";
 import { Radio } from "@/components/radio";
 import * as Headless from "@headlessui/react";
 
+type IngestionType = "URL" | "File Upload";
+
 function FileUpload({
   file,
   handleFileChange,
@@ -71,7 +73,10 @@ export default function CreateIngestionPage() {
     url: "",
     user_id: "test_user",
   });
-  const [ingestionType, setIngestionType] = React.useState(undefined);
+  const [ingestionType, setIngestionType]: [
+      undefined | IngestionType,
+      React.Dispatch<React.SetStateAction<undefined | IngestionType>>,
+  ] = React.useState(undefined as undefined | IngestionType);
   const [file, setFile] = React.useState<File | null>(null);
   const router = useRouter();
 
@@ -167,7 +172,7 @@ export default function CreateIngestionPage() {
               <Headless.RadioGroup
                 name="ingestion_type"
                 className="mt-4 flex gap-6 sm:gap-8"
-                onChange={(e) => setIngestionType(e)}
+                onChange={(e: IngestionType) => setIngestionType(e)}
               >
                 {["URL", "File Upload"].map((type) => (
                   <Headless.Field
