@@ -11,7 +11,7 @@ import { Text } from "@/components/text";
 import { Input } from "@/components/input";
 import { Textarea } from "@/components/textarea";
 import { PlusIcon, MinusIcon } from "@heroicons/react/20/solid";
-import { Listbox, ListboxOption } from "@/components/listbox";
+import { Listbox, ListboxOption, ListboxLabel } from "@/components/listbox";
 import { Button } from "@/components/button";
 import { useRouter } from "next/navigation";
 import * as Headless from "@headlessui/react";
@@ -96,7 +96,7 @@ function SchemaColumn({
             >
               {dataTypes.map((dtype, index) => (
                 <ListboxOption key={index} value={dtype.key}>
-                  {dtype.name}
+                  <ListboxLabel>{dtype.name}</ListboxLabel>
                 </ListboxOption>
               ))}
             </Listbox>
