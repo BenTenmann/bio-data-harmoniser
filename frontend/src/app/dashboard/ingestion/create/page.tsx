@@ -74,8 +74,8 @@ export default function CreateIngestionPage() {
     user_id: "test_user",
   });
   const [ingestionType, setIngestionType]: [
-      undefined | IngestionType,
-      React.Dispatch<React.SetStateAction<undefined | IngestionType>>,
+    undefined | IngestionType,
+    React.Dispatch<React.SetStateAction<undefined | IngestionType>>,
   ] = React.useState(undefined as undefined | IngestionType);
   const [file, setFile] = React.useState<File | null>(null);
   const router = useRouter();
