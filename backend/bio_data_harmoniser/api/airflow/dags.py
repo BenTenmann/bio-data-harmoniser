@@ -423,6 +423,7 @@ with airflow.DAG(
 
         task_instance: TaskInstance = context["task_instance"]
         dag_run: DagRun = context["dag_run"]
+        task_instances = dag_run.get_task_instances()
         node_name = "Pool extracted files"
         with logging.logging_session(
             node=logging.LoggedNode(
@@ -434,7 +435,8 @@ with airflow.DAG(
                 ),
                 upstream_node_ids=[
                     f"{ti.task_id}_{ti.map_index}"
-                    for ti in dag_run.fetch_task_instances(task_ids=["retrieve_and_extract.extraction_type"])
+                    for ti in task_instances
+                    if ti.task_id == "retrieve_and_extract.extraction_type"
                 ]
             ),
             output_dir=folder_path_from_task_instance(task_instance, "logs")

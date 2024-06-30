@@ -101,7 +101,7 @@ export type TaskType = "retrieve" | "download" | "extract" | "process";
 
 export type NodeMetadata = {
   name: string;
-  status: string;
+  status: "success" | "failed" | "running" | "skipped";
   type: TaskType;
   logs: string[];
   decisions: Decision[];
@@ -207,7 +207,6 @@ function DecisionComponent({
         ) : (
           <div className="flex flex-row items-center space-x-2">
             <span className="text-sm">{decision.content.column_name}</span>
-            {/*<span className="text-sm">{decision.content.value}</span>*/}
             <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
               <DialogTitle>
                 alignment of column <Code>{decision.content.column_name}</Code>
@@ -283,16 +282,23 @@ export const CustomNode = ({
   data: NodeMetadata & { runId: string };
 }) => {
   const [selected, setSelected] = React.useState(false);
+  const statusColours = {
+    success: ["text-lime-700", "bg-lime-500/20", "border-lime-700"],
+    failed: ["text-rose-700", "bg-rose-500/20", "border-rose-700"],
+    running: ["text-cyan-700", "bg-cyan-500/20", "border-cyan-700"],
+    skipped: ["text-gray-700", "bg-gray-500/20", "border-gray-700"],
+  };
+  const [colour, backgroundColour, borderColour] = statusColours[data.status];
   return (
     <>
       <div
-        className={`rounded-lg border-2 bg-white p-5 ${selected ? "border-solid border-indigo-500 text-indigo-500" : "border-dashed border-gray-400"} shadow-sm`}
+        className={`rounded-lg border-2 ${backgroundColour} p-5 ${selected ? "border-solid border-indigo-500 text-indigo-500" : `border-dashed ${borderColour}`} shadow-sm`}
         onClick={() => setSelected(!selected)}
       >
         <div className="flex items-center space-x-2">
           <NodeIcon
             type={data.type}
-            color={selected ? `text-indigo-500` : `text-gray-900`}
+            color={selected ? `text-indigo-500` : colour}
           />
           <span
             className={`text-lg font-semibold ${selected ? "text-indigo-500 drop-shadow-glow" : "text-gray-900"}`}
