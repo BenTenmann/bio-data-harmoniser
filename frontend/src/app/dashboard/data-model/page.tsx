@@ -45,7 +45,7 @@ export default async function SchemaDashboard() {
                 <div className="flex shrink-0 items-center gap-x-4">
                   <div className="hidden sm:flex sm:flex-col sm:items-end">
                     <p className="text-sm leading-6 text-gray-900">
-                      {Object.keys(schema.columns).length} fields
+                      {Object.keys(schema.columns).length} columns
                     </p>
                   </div>
                   <ChevronRightIcon

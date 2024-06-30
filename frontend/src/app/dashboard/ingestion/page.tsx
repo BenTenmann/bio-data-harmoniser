@@ -4,6 +4,7 @@ import { Button } from "@/components/button";
 import { statusColors } from "@/lib/utils";
 import React from "react";
 import { Text } from "@/components/text";
+import { clsx } from "clsx";
 
 export const dynamic = "force-dynamic";
 
@@ -21,14 +22,32 @@ type Ingestion = {
   execution_date: number;
 };
 
+const colours = {
+  running: ["bg-cyan-500/20", "bg-cyan-500"],
+  success: ["bg-lime-500/20", "bg-lime-500"],
+  failed: ["bg-rose-500/20", "bg-rose-500"],
+};
+
 async function getIngestions(): Promise<Ingestion[]> {
   const userId = "test_user";
   const response = await fetch(`http://0.0.0.0:80/ingestions/${userId}`);
   return response.json();
 }
 
-function getStatusColor(status: keyof typeof statusColors) {
-  return statusColors[status];
+function StatusComponent({ status }: { status: keyof typeof statusColors }) {
+  const [backgroundColour, foregroundColour] = colours[status];
+  return (
+    <div className="mt-1 flex items-center gap-x-1.5">
+      <div
+        className={clsx("flex-none", "rounded-full", backgroundColour, "p-1")}
+      >
+        <div
+          className={clsx("h-1.5", "w-1.5", "rounded-full", foregroundColour)}
+        />
+      </div>
+      <p className="text-xs leading-5 text-gray-500">{status}</p>
+    </div>
+  );
 }
 
 function IngestionPage({ ingestions }: { ingestions: Ingestion[] }) {
@@ -70,22 +89,7 @@ function IngestionPage({ ingestions }: { ingestions: Ingestion[] }) {
                   <p className="text-sm leading-6 text-gray-900">
                     {new Date(ingestion.execution_date).toDateString()}
                   </p>
-                  <div className="mt-1 flex items-center gap-x-1.5">
-                    <div
-                      className={`flex-none rounded-full bg-${getStatusColor(ingestion.status)}-500/20 p-1`}
-                    >
-                      <div
-                        className={`h-1.5 w-1.5 rounded-full bg-${getStatusColor(ingestion.status)}-500`}
-                      />
-                    </div>
-                    <p className="text-xs leading-5 text-gray-500">
-                      {ingestion.status}
-                    </p>
-                  </div>
-                  {/*<Badge color={statusColors[datum.status]}>*/}
-                  {/*    {getStatusIcon(datum.status)}*/}
-                  {/*    {datum.status}*/}
-                  {/*</Badge>*/}
+                  <StatusComponent status={ingestion.status} />
                 </div>
                 <ChevronRightIcon
                   className="h-5 w-5 flex-none text-gray-400"

@@ -229,6 +229,14 @@ export function CreateSchema({
       description: "",
     },
   ]);
+  const [createButtonDisabled, setCreateButtonDisabled] = React.useState(true);
+  React.useEffect(() => {
+    setCreateButtonDisabled(
+      columns.length === 0 ||
+        columns.some((column) => column.name === "") ||
+        formData.schema_name === "",
+    );
+  }, [columns, formData]);
 
   const addColumn = () => {
     setColumns([
@@ -378,7 +386,15 @@ export function CreateSchema({
           <Button outline href="/dashboard/data-model">
             Cancel
           </Button>
-          <Button type="submit">Create</Button>
+          <Button
+            type="submit"
+            className={
+              createButtonDisabled ? "cursor-not-allowed" : "cursor-pointer"
+            }
+            disabled={createButtonDisabled}
+          >
+            Create
+          </Button>
         </div>
       </form>
     </>

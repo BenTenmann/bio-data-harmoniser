@@ -79,6 +79,15 @@ export default function CreateIngestionPage() {
   ] = React.useState(undefined as undefined | IngestionType);
   const [file, setFile] = React.useState<File | null>(null);
   const router = useRouter();
+  const [createButtonDisabled, setCreateButtonDisabled] = React.useState(true);
+  React.useEffect(() => {
+    setCreateButtonDisabled(
+      ingestionType === undefined ||
+        formData.name === "" ||
+        (ingestionType === "File Upload" && file === null) ||
+        (ingestionType === "URL" && formData.url === ""),
+    );
+  }, [formData, ingestionType]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
@@ -231,7 +240,13 @@ export default function CreateIngestionPage() {
           <Button outline href="/">
             Cancel
           </Button>
-          <Button type="submit" disabled={ingestionType === undefined}>
+          <Button
+            type="submit"
+            disabled={createButtonDisabled}
+            className={
+              createButtonDisabled ? "cursor-not-allowed" : "cursor-pointer"
+            }
+          >
             Create
           </Button>
         </div>
