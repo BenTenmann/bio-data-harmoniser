@@ -12,7 +12,7 @@ import pendulum
 import pydantic
 from airflow.decorators import task, task_group
 from airflow.exceptions import AirflowSkipException
-from airflow.models import Param, TaskInstance, DagRun
+from airflow.models import Param, TaskInstance, DagRun, Variable
 from airflow.utils.trigger_rule import TriggerRule
 if TYPE_CHECKING:
     import pandera as pa

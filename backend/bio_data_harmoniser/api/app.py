@@ -566,3 +566,25 @@ def get_dag(run_id: str) -> DataExtractionDag:
             for file in Path(path).glob("*.json")
         ]
     )
+
+
+class LlmSecrets(pydantic.BaseModel):
+    llm_api_key: str
+    # TODO: add other secrets (e.g. organization ID)
+
+
+@app.post("/secrets/llm")
+def set_llm_secrets(secrets: LlmSecrets) -> Message:
+    airflow.set_variable(
+        name=settings.LLM_API_KEY_NAME,
+        value=secrets.llm_api_key,
+    )
+    return Message(message="Secrets set", status=Status.OK)
+
+
+@app.get("/secrets/llm")
+def get_llm_secrets() -> LlmSecrets:
+    value = airflow.get_variable(settings.LLM_API_KEY_NAME)
+    if value is None:
+        raise HTTPException(status_code=404, detail="LLM API key not found")
+    return LlmSecrets(llm_api_key=value)

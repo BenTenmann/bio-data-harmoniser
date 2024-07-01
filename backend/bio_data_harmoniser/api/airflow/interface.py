@@ -56,3 +56,23 @@ class AirflowInterface:
         if response.status_code != 200:
             raise self.exception_cls(response.status_code, response.text)
         return response.json()["dag_run_id"]
+
+    def set_variable(self, name: str, value: Any, description: str | None = None) -> None:
+        response = requests.post(
+            f"{self.api_url}/variables",
+            json={"key": name, "value": value, "description": description},
+            auth=self.auth,
+        )
+        if response.status_code != 200:
+            raise self.exception_cls(response.status_code, response.text)
+
+    def get_variable(self, name: str, default: Any = None) -> Any:
+        response = requests.get(
+            f"{self.api_url}/variables/{name}",
+            auth=self.auth,
+        )
+        if response.status_code == 404:
+            return default
+        if response.status_code != 200:
+            raise self.exception_cls(response.status_code, response.text)
+        return response.json()["value"]

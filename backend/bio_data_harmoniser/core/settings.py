@@ -1,8 +1,14 @@
 from typing import Literal
 
+import pydantic
 import pydantic_settings
+from airflow.models import Variable
+
+from bio_data_harmoniser.core import utils
 
 LlmProvider = Literal["openai", "anthropic"]
+
+LLM_API_KEY_NAME: Literal["llm_api_key"] = "llm_api_key"
 
 
 class AirflowSettings(pydantic_settings.BaseSettings):
@@ -42,8 +48,19 @@ class LlmSettings(pydantic_settings.BaseSettings):
     model: str = "gpt-4o"
     embedding_model: str = "mixedbread-ai/mxbai-embed-large-v1"
 
+    api_key: str | None = None
+
     class Config:
         env_prefix = "LLM_"
+
+    @pydantic.field_validator("api_key")
+    @classmethod
+    def validate_api_key(cls, v: str | None) -> str | None:
+        if v is not None:
+            return v
+        with utils.suppress_stdout_stderr():
+            # this produces a nasty log message that we don't want
+            return Variable.get(LLM_API_KEY_NAME, default_var=None)
 
 
 airflow = AirflowSettings()

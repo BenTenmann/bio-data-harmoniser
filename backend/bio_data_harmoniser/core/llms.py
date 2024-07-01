@@ -18,16 +18,22 @@ def clean_prompt_formatting(prompt: str) -> str:
 
 
 @functools.cache
-def get_llm(provider: settings.LlmProvider = settings.llms.provider, model_name: str = settings.llms.model) -> BaseLanguageModel:
+def get_llm(
+    provider: settings.LlmProvider = settings.llms.provider,
+    model_name: str = settings.llms.model,
+    api_key: str | None = settings.llms.api_key,
+) -> BaseLanguageModel:
     if provider == "anthropic":
         llm = langchain_anthropic.ChatAnthropic(
             model=model_name,
             temperature=0.0,
+            anthropic_api_key=api_key,
         )
     elif provider == "openai":
         llm = langchain_openai.ChatOpenAI(
             model_name=model_name,
             temperature=0.0,
+            openai_api_key=api_key,
         )
     else:
         raise ValueError(f"Unknown provider {provider}")

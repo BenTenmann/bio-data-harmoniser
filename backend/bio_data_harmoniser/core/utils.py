@@ -1,4 +1,5 @@
 import contextlib
+import os
 import re
 
 import pydantic
@@ -64,3 +65,10 @@ def disable_load_state():
 
 def load_state_is_disabled() -> bool:
     return _DISABLE_LOAD_STATE
+
+
+@contextlib.contextmanager
+def suppress_stdout_stderr():
+    with open(os.devnull, "w") as devnull:
+        with contextlib.redirect_stdout(devnull), contextlib.redirect_stderr(devnull):
+            yield
