@@ -254,7 +254,7 @@ class EntityNormaliser:
     def normalise(self, series: pd.Series) -> pd.Series:
         if series.dropna().empty:
             logger.debug("Series is empty, returning original series")
-            return pd.Series([], index=series.index, name=series.name)
+            return series
         if is_free_text(series, self.llm):
             logger.debug("Series is free text, using retrieval")
             if self.algorithm == NormalisationAlgorithm.RETRIEVAL:

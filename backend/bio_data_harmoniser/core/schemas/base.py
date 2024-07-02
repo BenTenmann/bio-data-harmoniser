@@ -452,10 +452,10 @@ def align_dataframe_to_schema(
                 if free_text_column_name is not None:
                     column_name_mapping[free_text_column_name] = column.name
                     log_session.log_column_alignment_op(
-                        column_name=free_text_column_name,
+                        column_name=column.name,
                         operation=logging.RenameOperation(
                             original_name=free_text_column_name,
-                            new_name=free_text_column_name,
+                            new_name=column.name,
                         )
                     )
                     continue

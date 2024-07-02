@@ -12,6 +12,7 @@ import * as TailwindDialog from "@/components/dialog";
 import { Button } from "@/components/button";
 import { Field, Label } from "@/components/fieldset";
 import { Input } from "@/components/input";
+import { fetchApiKey } from "@/lib/secrets";
 
 const navs = [
   {
@@ -40,6 +41,42 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     current: nav.href === currentPath,
   }));
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [apiKey, setApiKey] = useState<string | undefined>(undefined);
+  const [hasChanged, setHasChanged] = useState(false);
+
+  const handleOpenSettings = async () => {
+    setSettingsOpen(true);
+    const apiKey = await fetchApiKey();
+    setApiKey(apiKey);
+  };
+
+  const handleChangeApiKey = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setApiKey(event.target.value);
+    setHasChanged(true);
+  };
+
+  const handleSaveSettings = async () => {
+    const response = await fetch("http://0.0.0.0:80/secrets/llm", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        llm_api_key: apiKey,
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(response.statusText);
+    }
+    setHasChanged(false);
+  };
+
+  const handleCloseSettings = () => {
+    setApiKey(undefined);
+    setSettingsOpen(false);
+    setHasChanged(false);
+  };
+
   return (
     <>
       <div>
@@ -208,7 +245,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                 <li className="mt-auto">
                   <a
                     // href=""
-                    onClick={() => setSettingsOpen(true)}
+                    onClick={handleOpenSettings}
                     className="group -mx-2 flex cursor-pointer gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 text-gray-400 hover:bg-gray-800 hover:text-white"
                   >
                     <Cog6ToothIcon
@@ -219,7 +256,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                   </a>
                   <TailwindDialog.Dialog
                     open={settingsOpen}
-                    onClose={() => setSettingsOpen(false)}
+                    onClose={handleCloseSettings}
                   >
                     <TailwindDialog.DialogTitle>
                       Settings
@@ -230,11 +267,24 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                     <TailwindDialog.DialogBody>
                       <Field>
                         <Label>OpenAI API Key</Label>
-                        <Input placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" />
+                        <Input
+                            placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                            name="apiKey"
+                            value={apiKey}
+                            onChange={handleChangeApiKey}
+                            autoComplete="off"
+                        />
                       </Field>
                     </TailwindDialog.DialogBody>
                     <TailwindDialog.DialogActions>
-                      <Button outline onClick={() => setSettingsOpen(false)}>
+                      <Button
+                          onClick={handleSaveSettings}
+                          disabled={!hasChanged}
+                          className={hasChanged ? "cursor-pointer" : "cursor-not-allowed"}
+                      >
+                        Save
+                      </Button>
+                      <Button outline onClick={handleCloseSettings}>
                         Close
                       </Button>
                     </TailwindDialog.DialogActions>

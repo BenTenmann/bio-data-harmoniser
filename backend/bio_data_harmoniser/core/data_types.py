@@ -48,7 +48,7 @@ class EntityType(_NoOpCheckMixin, pandas_engine.STRING):
             isinstance(data_container.dtype, pd.CategoricalDtype)
             or pd.api.types.is_string_dtype(data_container)
         ):
-            raise ValueError(f"Cannot coerce {data_container} to {self}")
+            data_container = data_container.astype(str)
         assert self.normaliser is not None, f"No normaliser found for {self}"
         out = self.normaliser.normalise(data_container)
         return out

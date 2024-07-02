@@ -29,7 +29,6 @@ export type DataTypeParam = {
   options: DataTypeParamOption[];
   allow_multiple: boolean;
   options_ordered: boolean;
-  default?: string;
   choice?: DataTypeParamOption;
 };
 
@@ -125,7 +124,7 @@ function SchemaColumn({
                       <Headless.RadioGroup
                         className="mt-4 flex gap-6 sm:gap-8"
                         key={paramIndex}
-                        defaultValue={param.default}
+                        defaultValue={param.choice?.name}
                         onChange={(e) =>
                           handleColumnDataTypeChange(
                             index,

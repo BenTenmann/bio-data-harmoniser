@@ -291,7 +291,6 @@ class DataTypeParam(pydantic.BaseModel, Generic[T]):
     options: list[DataTypeParamOption[T]]
     allow_multiple: bool = False
     options_ordered: bool = False
-    default: str | None = None
     choice: DataTypeParamOption[T] | None = None
 
 
@@ -310,6 +309,12 @@ class DataType(pydantic.BaseModel):
             parameters=parameters,
         )
 
+
+MEDIUM_NORMALISATION_ALGORITHM = DataTypeParamOption[entity_normalisation.NormalisationAlgorithm](
+    name="Medium",
+    value=entity_normalisation.NormalisationAlgorithm.RETRIEVAL_AND_CLASSIFICATION,
+    description="This algorithm is slower, but produces more accurate results. It is recommended for most use cases.",
+)
 
 DATA_TYPES = [
     DataType.from_type(
@@ -413,19 +418,15 @@ DATA_TYPES = [
                         value=entity_normalisation.NormalisationAlgorithm.RETRIEVAL,
                         description="This is the fastest normalisation algorithm, but produces the least accurate results.",
                     ),
-                    DataTypeParamOption[entity_normalisation.NormalisationAlgorithm](
-                        name="Medium",
-                        value=entity_normalisation.NormalisationAlgorithm.RETRIEVAL_AND_CLASSIFICATION,
-                        description="This algorithm is slower, but produces more accurate results. It is recommended for most use cases.",
-                    ),
+                    MEDIUM_NORMALISATION_ALGORITHM,
                     DataTypeParamOption[entity_normalisation.NormalisationAlgorithm](
                         name="Slow",
                         value=entity_normalisation.NormalisationAlgorithm.AGENTIC_RETRIEVAL_AND_CLASSIFICATION,
                         description="This algorithm is the slowest, but produces the most accurate results. It is recommended for especially tricky use cases.",
-                    )
+                    ),
                 ],
                 options_ordered=True,
-                default="Medium",
+                choice=MEDIUM_NORMALISATION_ALGORITHM,
             )
         ]
     ),
@@ -575,6 +576,7 @@ class LlmSecrets(pydantic.BaseModel):
 
 @app.post("/secrets/llm")
 def set_llm_secrets(secrets: LlmSecrets) -> Message:
+    logger.info(f"Setting LLM secrets")
     airflow.set_variable(
         name=settings.LLM_API_KEY_NAME,
         value=secrets.llm_api_key,
@@ -583,8 +585,10 @@ def set_llm_secrets(secrets: LlmSecrets) -> Message:
 
 
 @app.get("/secrets/llm")
-def get_llm_secrets() -> LlmSecrets:
+def get_llm_secrets(hide_api_key: bool = False) -> LlmSecrets:
     value = airflow.get_variable(settings.LLM_API_KEY_NAME)
     if value is None:
         raise HTTPException(status_code=404, detail="LLM API key not found")
+    if hide_api_key:
+        value = value[:4] + "*" * (len(value) - 8) + value[-4:]
     return LlmSecrets(llm_api_key=value)

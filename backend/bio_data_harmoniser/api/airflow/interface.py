@@ -58,9 +58,12 @@ class AirflowInterface:
         return response.json()["dag_run_id"]
 
     def set_variable(self, name: str, value: Any, description: str | None = None) -> None:
+        payload = {"key": name, "value": value}
+        if description is not None:
+            payload["description"] = description
         response = requests.post(
             f"{self.api_url}/variables",
-            json={"key": name, "value": value, "description": description},
+            json=payload,
             auth=self.auth,
         )
         if response.status_code != 200:
