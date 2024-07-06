@@ -82,6 +82,7 @@ function SchemaColumn({
               onChange={(e) =>
                 handleColumnChange(index, "name", e.target.value)
               }
+              autoComplete="off"
             />
           </Field>
           <Field>
@@ -159,6 +160,7 @@ function SchemaColumn({
               onChange={(e) =>
                 handleColumnChange(index, "description", e.target.value)
               }
+              autoComplete="off"
             />
           </Field>
         </div>
@@ -349,6 +351,7 @@ export function CreateSchema({
                 placeholder="Name"
                 name="schema_name"
                 onChange={handleChange}
+                autoComplete="off"
               />
             </Field>
             <Field>
@@ -357,6 +360,7 @@ export function CreateSchema({
                 placeholder="Description"
                 name="schema_description"
                 onChange={handleChange}
+                autoComplete="off"
               />
             </Field>
           </FieldGroup>

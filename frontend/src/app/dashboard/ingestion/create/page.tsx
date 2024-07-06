@@ -206,6 +206,7 @@ export default function CreateIngestionPage() {
                     name="name"
                     onChange={handleChange}
                     value={formData.name}
+                    autoComplete="off"
                   />
                 </Field>
                 <Field>
@@ -215,6 +216,7 @@ export default function CreateIngestionPage() {
                     name="description"
                     onChange={handleChange}
                     value={formData.description}
+                    autoComplete="off"
                   />
                 </Field>
               </FieldGroup>
@@ -229,6 +231,7 @@ export default function CreateIngestionPage() {
                       placeholder="URL"
                       name="url"
                       onChange={handleUrlChange}
+                      autoComplete="off"
                     />
                   </Field>
                 )}

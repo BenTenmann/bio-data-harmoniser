@@ -194,6 +194,7 @@ function DecisionComponent({
   decision: Decision;
   runId: string;
 }) {
+  const decodedRunId = decodeURIComponent(runId);
   const [showDialog, setShowDialog] = React.useState(false);
   return (
     <div
@@ -230,7 +231,7 @@ function DecisionComponent({
                     >
                       <span className="text-sm">
                         Column values were mapped (
-                        <Link href={`/ingestion/${runId}/mapping`}>
+                        <Link href={`/dashboard/ingestion/${decodedRunId}/mapping`}>
                           see here
                         </Link>
                         ):{" "}
