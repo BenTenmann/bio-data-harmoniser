@@ -44,8 +44,8 @@ class OntologySettings(pydantic_settings.BaseSettings):
 
 
 class LlmSettings(pydantic_settings.BaseSettings):
-    provider: LlmProvider = "openai"
-    model: str = "gpt-4o"
+    provider: LlmProvider = "anthropic"
+    model: str = "claude-3-5-sonnet-20240620"
     embedding_model: str = "mixedbread-ai/mxbai-embed-large-v1"
 
     api_key: str | None = None

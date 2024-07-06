@@ -18,8 +18,8 @@ FASTAPI_UPLOAD_DIR := $(BASE_PATH)/backend/data/uploads
 
 ONTOLOGY_PATH := $(BASE_PATH)/backend/data/ontology
 
-LLM_PROVIDER := openai
-LLM_MODEL := gpt-4o
+LLM_PROVIDER := anthropic
+LLM_MODEL := claude-3-5-sonnet-20240620
 LLM_EMBEDDINGS_MODEL := mixedbread-ai/mxbai-embed-large-v1
 
 # see: https://stackoverflow.com/a/76405182

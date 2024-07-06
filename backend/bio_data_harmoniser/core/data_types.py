@@ -116,7 +116,7 @@ class AminoAcidSequenceType(_NoOpCheckMixin, pandas_engine.STRING):
 
     def coerce(self, data_container: Any):
         if not pd.api.types.is_string_dtype(data_container):
-            raise ValueError(f"Cannot coerce {data_container} to {self}")
+            data_container = data_container.astype(str)
         data_container = data_container.str.strip()
         return data_container.where(data_container.str.match(self.regex), pd.NA)
 
@@ -133,7 +133,7 @@ class NucleotideSequenceType(_NoOpCheckMixin, pandas_engine.STRING):
 
     def coerce(self, data_container: Any):
         if not pd.api.types.is_string_dtype(data_container):
-            raise ValueError(f"Cannot coerce {data_container} to {self}")
+            data_container = data_container.astype(str)
         data_container = data_container.str.strip()
         return data_container.where(data_container.str.match(self.regex), pd.NA)
 
@@ -155,7 +155,7 @@ class SMILESType(_NoOpCheckMixin, pandas_engine.STRING):
                 "Cannot coerce SMILES to string. Please install rdkit with `pip install rdkit`"
             ) from e
         if not pd.api.types.is_string_dtype(data_container):
-            raise ValueError(f"Cannot coerce {data_container} to {self}")
+            data_container = data_container.astype(str)
         data_container = data_container.str.strip()
         return pd.Series(
             [

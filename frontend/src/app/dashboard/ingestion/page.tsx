@@ -55,7 +55,7 @@ function IngestionPage({ ingestions }: { ingestions: Ingestion[] }) {
     <div>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold leading-6 text-gray-900">
-          Ingestions
+          Ingestion
         </h1>
         <Button href="/dashboard/ingestion/create">
           <PlusIcon className="text-white" /> Create

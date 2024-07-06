@@ -16,7 +16,7 @@ export default async function SchemaDashboard() {
       <div>
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-semibold leading-6 text-gray-900">
-            Schemas
+            Data Model
           </h1>
           <Button href="/dashboard/data-model/create">
             <PlusIcon className="text-white" /> Create

@@ -266,7 +266,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                     </TailwindDialog.DialogDescription>
                     <TailwindDialog.DialogBody>
                       <Field>
-                        <Label>OpenAI API Key</Label>
+                        <Label>Anthropic API Key</Label>
                         <Input
                             placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                             name="apiKey"

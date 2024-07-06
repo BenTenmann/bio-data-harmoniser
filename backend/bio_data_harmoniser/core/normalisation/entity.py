@@ -232,11 +232,28 @@ def _finalise_output(
     mapping_type: logging.MappingType,
 ) -> pd.Series:
     _log_mappings(results, str(series.name), entity_types, mapping_type)
-    ids = results.merge(series.to_frame("mention"), on="mention", how="right")[
-        ontology.OntologyColumns.id
-    ]
-    ids.index = series.index
-    return ids
+    index = series.index if series.index is not None else pd.RangeIndex(0, len(series))
+
+    original_index_name = index.name
+    temp_index_col_name: str | list[str] = "original_index"
+    if isinstance(index, pd.MultiIndex):
+        original_index_name = index.names
+        temp_index_col_name = [
+            f"__original_index_{i}"
+            for i in range(len(index.names))
+        ]
+    ids = (
+        results.merge(
+            series.to_frame("mention")
+            .reset_index(names=temp_index_col_name),
+            on="mention",
+            how="right"
+        )
+        .set_index(temp_index_col_name)
+        .rename_axis(original_index_name)
+        [ontology.OntologyColumns.id]
+    )
+    return ids.loc[index]
 
 
 @dataclass

@@ -12,6 +12,7 @@ import {
   CircleStackIcon,
   ArrowLongRightIcon,
   ArrowsPointingInIcon,
+  ArrowTopRightOnSquareIcon,
 } from "@heroicons/react/24/outline";
 import { QuestionMarkCircleIcon } from "@heroicons/react/20/solid";
 import { Handle, Position } from "reactflow";
@@ -26,6 +27,8 @@ import {
 import { Code } from "@/components/text";
 import { Button } from "@/components/button";
 import { Link } from "@/components/link";
+import { DescriptionList, DescriptionTerm, DescriptionDetails } from "@/components/description-list";
+import { Subheading } from "@/components/heading";
 
 type RenameOperation = {
   original_name: string;
@@ -153,30 +156,26 @@ function InferenceComponent({ inference }: { inference: InferenceOperation }) {
   switch (inference.type) {
     case "derived":
       return (
-        <div className="flex flex-row items-center space-x-2">
-          <span className="text-sm">
-            The column was derived from other columns
-          </span>
-        </div>
+        <>
+          <DescriptionTerm>Derived: </DescriptionTerm>
+          <DescriptionDetails>
+            <div className="flex flex-row items-center space-x-2">
+              <span className="text-sm">Derived from other columns</span>
+            </div>
+          </DescriptionDetails>
+        </>
       );
     case "extracted":
       return (
-        <div className="flex flex-row items-center space-x-2">
-          <span className="text-sm">
-            The column was extracted from the context:{" "}
-          </span>
-          <span className="truncate text-sm">{inference.data.answer}</span>
-          {/*{*/}
-          {/*  inference.data.references.url ? (*/}
-          {/*    <Link href={inference.data.references.url}>*/}
-          {/*      <span className="text-sm">(see {inference.data.references.text})</span>*/}
-          {/*    </Link>*/}
-          {/*  ) : (*/}
-          {/*    <span className="text-sm">(see {inference.data.references.text})</span>*/}
-          {/*  )*/}
-          {/*}*/}
-          <QuestionMarkCircleIcon className="h-4 w-4" />
-        </div>
+        <>
+          <DescriptionTerm>Extracted: </DescriptionTerm>
+          <DescriptionDetails>
+            <div className="flex flex-row items-center space-x-2">
+              <span className="truncate text-sm">{inference.data.answer}</span>
+              <QuestionMarkCircleIcon className="h-4 w-4" />
+            </div>
+          </DescriptionDetails>
+        </>
       );
     default:
       return (
@@ -212,58 +211,60 @@ function DecisionComponent({
               <DialogTitle>
                 alignment of column <Code>{decision.content.column_name}</Code>
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription>Operations performed on this column</DialogDescription>
+              <DialogBody>
+                <Subheading>Operations</Subheading>
+                <DescriptionList className="mt-4">
                 {decision.content.operations.map((op, index) =>
                   isRenameOp(op) ? (
-                    <div
-                      key={index}
-                      className="flex flex-row items-center space-x-2"
-                    >
-                      <span className="text-sm">Column was renamed: </span>
-                      <span className="text-sm">{op.original_name}</span>
-                      <ArrowLongRightIcon className="h-4 w-4" />
-                      <span className="text-sm">{op.new_name}</span>
-                    </div>
+                    <>
+                      <DescriptionTerm>Rename: </DescriptionTerm>
+                      <DescriptionDetails>
+                        <div className="flex flex-row items-center space-x-2">
+                          <span className="text-sm">{op.original_name}</span>
+                          <ArrowLongRightIcon className="h-4 w-4"/>
+                          <span className="text-sm">{op.new_name}</span>
+                        </div>
+                      </DescriptionDetails>
+                    </>
                   ) : isMappingOp(op) ? (
-                    <div
-                      key={index}
-                      className="flex flex-row items-center space-x-2"
-                    >
-                      <span className="text-sm">
-                        Column values were mapped (
-                        <Link href={`/dashboard/ingestion/${decodedRunId}/mapping`}>
-                          see here
-                        </Link>
-                        ):{" "}
-                      </span>
-                      <span className="text-sm">
-                        {op.mappings.length} unique mappings
-                      </span>
-                    </div>
+                      <>
+                        <DescriptionTerm>Mapping: </DescriptionTerm>
+                        <DescriptionDetails>
+                          <div className="flex flex-row items-center space-x-2">
+                              <p>{op.mappings.length} unique mapping{op.mappings.length > 1 ? "s" : ""}</p>
+                            <Link href={`/dashboard/ingestion/${decodedRunId}/mapping`}>
+                              <ArrowTopRightOnSquareIcon className="h-4 w-4"/>
+                            </Link>
+                          </div>
+                        </DescriptionDetails>
+                      </>
                   ) : isInferenceOp(op) ? (
                     InferenceComponent({ inference: op })
                   ) : isSetValueOp(op) ? (
-                    <div
-                      key={index}
-                      className="flex flex-row items-center space-x-2"
-                    >
-                      <span className="text-sm">
-                        Column values were set to default:{" "}
-                      </span>
-                      <span className="text-sm">
-                        <Code>{String(op.value)}</Code>
-                      </span>
-                    </div>
+                      <>
+                        <DescriptionTerm>Default: </DescriptionTerm>
+                        <DescriptionDetails>
+                          <div className="flex flex-row items-center space-x-2">
+                            <span className="text-sm">
+                              <Code>{String(op.value)}</Code>
+                            </span>
+                          </div>
+                        </DescriptionDetails>
+                      </>
                   ) : (
-                    <div
-                      key={index}
-                      className="flex flex-row items-center space-x-2"
-                    >
-                      <span className="text-sm">unknown operation</span>
-                    </div>
+                    <>
+                      <DescriptionTerm>Unknown operation: </DescriptionTerm>
+                      <DescriptionDetails>
+                        <div className="flex flex-row items-center space-x-2">
+                          <span className="text-sm">unknown operation</span>
+                        </div>
+                      </DescriptionDetails>
+                    </>
                   ),
                 )}
-              </DialogDescription>
+                </DescriptionList>
+              </DialogBody>
               <DialogActions>
                 <Button outline onClick={() => setShowDialog(false)}>
                   Close
