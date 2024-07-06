@@ -694,7 +694,7 @@ with airflow.DAG(
         if not tables:
             raise ValueError("No Delta tables found")
         logger.info("Initialising SQL context")
-        sql_context = pl.sql.context.SQLContext(
+        sql_context = pl.SQLContext(
             **{
                 path.stem: pl.scan_delta(str(path))
                 for path in tables
