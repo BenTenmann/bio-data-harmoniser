@@ -8,10 +8,8 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-      <Shell>
-        <Suspense fallback={<Loading />}>
-          {children}
-        </Suspense>
-      </Shell>
+    <Shell>
+      <Suspense fallback={<Loading />}>{children}</Suspense>
+    </Shell>
   );
 }

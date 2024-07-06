@@ -268,19 +268,21 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                       <Field>
                         <Label>Anthropic API Key</Label>
                         <Input
-                            placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                            name="apiKey"
-                            value={apiKey}
-                            onChange={handleChangeApiKey}
-                            autoComplete="off"
+                          placeholder="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+                          name="apiKey"
+                          value={apiKey}
+                          onChange={handleChangeApiKey}
+                          autoComplete="off"
                         />
                       </Field>
                     </TailwindDialog.DialogBody>
                     <TailwindDialog.DialogActions>
                       <Button
-                          onClick={handleSaveSettings}
-                          disabled={!hasChanged}
-                          className={hasChanged ? "cursor-pointer" : "cursor-not-allowed"}
+                        onClick={handleSaveSettings}
+                        disabled={!hasChanged}
+                        className={
+                          hasChanged ? "cursor-pointer" : "cursor-not-allowed"
+                        }
                       >
                         Save
                       </Button>

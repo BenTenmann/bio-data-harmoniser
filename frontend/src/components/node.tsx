@@ -27,7 +27,11 @@ import {
 import { Code } from "@/components/text";
 import { Button } from "@/components/button";
 import { Link } from "@/components/link";
-import { DescriptionList, DescriptionTerm, DescriptionDetails } from "@/components/description-list";
+import {
+  DescriptionList,
+  DescriptionTerm,
+  DescriptionDetails,
+} from "@/components/description-list";
 import { Subheading } from "@/components/heading";
 
 type RenameOperation = {
@@ -211,37 +215,44 @@ function DecisionComponent({
               <DialogTitle>
                 alignment of column <Code>{decision.content.column_name}</Code>
               </DialogTitle>
-              <DialogDescription>Operations performed on this column</DialogDescription>
+              <DialogDescription>
+                Operations performed on this column
+              </DialogDescription>
               <DialogBody>
                 <Subheading>Operations</Subheading>
                 <DescriptionList className="mt-4">
-                {decision.content.operations.map((op, index) =>
-                  isRenameOp(op) ? (
-                    <>
-                      <DescriptionTerm>Rename: </DescriptionTerm>
-                      <DescriptionDetails>
-                        <div className="flex flex-row items-center space-x-2">
-                          <span className="text-sm">{op.original_name}</span>
-                          <ArrowLongRightIcon className="h-4 w-4"/>
-                          <span className="text-sm">{op.new_name}</span>
-                        </div>
-                      </DescriptionDetails>
-                    </>
-                  ) : isMappingOp(op) ? (
+                  {decision.content.operations.map((op, index) =>
+                    isRenameOp(op) ? (
+                      <>
+                        <DescriptionTerm>Rename: </DescriptionTerm>
+                        <DescriptionDetails>
+                          <div className="flex flex-row items-center space-x-2">
+                            <span className="text-sm">{op.original_name}</span>
+                            <ArrowLongRightIcon className="h-4 w-4" />
+                            <span className="text-sm">{op.new_name}</span>
+                          </div>
+                        </DescriptionDetails>
+                      </>
+                    ) : isMappingOp(op) ? (
                       <>
                         <DescriptionTerm>Mapping: </DescriptionTerm>
                         <DescriptionDetails>
                           <div className="flex flex-row items-center space-x-2">
-                              <p>{op.mappings.length} unique mapping{op.mappings.length > 1 ? "s" : ""}</p>
-                            <Link href={`/dashboard/ingestion/${decodedRunId}/mapping`}>
-                              <ArrowTopRightOnSquareIcon className="h-4 w-4"/>
+                            <p>
+                              {op.mappings.length} unique mapping
+                              {op.mappings.length > 1 ? "s" : ""}
+                            </p>
+                            <Link
+                              href={`/dashboard/ingestion/${decodedRunId}/mapping`}
+                            >
+                              <ArrowTopRightOnSquareIcon className="h-4 w-4" />
                             </Link>
                           </div>
                         </DescriptionDetails>
                       </>
-                  ) : isInferenceOp(op) ? (
-                    InferenceComponent({ inference: op })
-                  ) : isSetValueOp(op) ? (
+                    ) : isInferenceOp(op) ? (
+                      InferenceComponent({ inference: op })
+                    ) : isSetValueOp(op) ? (
                       <>
                         <DescriptionTerm>Default: </DescriptionTerm>
                         <DescriptionDetails>
@@ -252,17 +263,17 @@ function DecisionComponent({
                           </div>
                         </DescriptionDetails>
                       </>
-                  ) : (
-                    <>
-                      <DescriptionTerm>Unknown operation: </DescriptionTerm>
-                      <DescriptionDetails>
-                        <div className="flex flex-row items-center space-x-2">
-                          <span className="text-sm">unknown operation</span>
-                        </div>
-                      </DescriptionDetails>
-                    </>
-                  ),
-                )}
+                    ) : (
+                      <>
+                        <DescriptionTerm>Unknown operation: </DescriptionTerm>
+                        <DescriptionDetails>
+                          <div className="flex flex-row items-center space-x-2">
+                            <span className="text-sm">unknown operation</span>
+                          </div>
+                        </DescriptionDetails>
+                      </>
+                    ),
+                  )}
                 </DescriptionList>
               </DialogBody>
               <DialogActions>
