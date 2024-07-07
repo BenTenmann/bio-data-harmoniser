@@ -41,11 +41,12 @@ def context_answers_question(context: list[str], question: str, llm: BaseLanguag
     Simply answer by saying "Yes" or "No". Do not explain your answer.
     """
 
-    response = llm.predict(
-        llms.clean_prompt_formatting(prompt).format(
+    response = llms.call_llm(
+        llm=llm,
+        prompt=llms.clean_prompt_formatting(prompt).format(
             context=format_context(context),
             question=question,
-        )
+        ),
     )
     logger.info(f"Is the context sufficient for answering the question: {response}")
     return "yes" in re.sub(r"\W", "", response.lower())
@@ -70,11 +71,12 @@ def update_question_to_get_better_context(context: list[str], question: str, llm
     Please provide an improved question to improve the context returned in the search results. Provide only the question, and nothing else.
     """
 
-    response = llm.predict(
-        llms.clean_prompt_formatting(prompt).format(
+    response = llms.call_llm(
+        llm=llm,
+        prompt=llms.clean_prompt_formatting(prompt).format(
             context=format_context(context),
             question=question,
-        )
+        ),
     )
     return response
 
@@ -166,11 +168,12 @@ class RetrievalAugmentedGenerator:
                 context = get_context(self.dense_retriever, question=question)
                 n_tries -= 1
 
-        llm_answer = self.llm.predict(
-            llms.clean_prompt_formatting(prompt).format(
+        llm_answer = llms.call_llm(
+            llm=self.llm,
+            prompt=llms.clean_prompt_formatting(prompt).format(
                 context=format_context(texts),
                 question=query,
-            )
+            ),
         )
         return _answer_to_response(llm_answer, texts)
 

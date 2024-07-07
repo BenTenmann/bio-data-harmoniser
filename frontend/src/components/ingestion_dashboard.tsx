@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   BookOpenIcon,
   CheckCircleIcon,
@@ -32,6 +32,7 @@ function getStatusIcon(status: Status) {
 
 export default function IngestionDashboard({ datum, children }) {
   const currentPath = usePathname();
+  const router = useRouter();
   const reRun = async () => {
     const res = await fetch(
       "http://localhost:8080/api/v1/dags/data_extraction/dagRuns",
@@ -46,8 +47,13 @@ export default function IngestionDashboard({ datum, children }) {
         }),
       },
     );
+    if (!res.ok) {
+        // TODO: handle error
+        alert("Failed to rerun ingestion");
+        return;
+    }
     const jsonData = await res.json();
-    console.log(jsonData);
+    router.push(`/dashboard/ingestion/${jsonData.dag_run_id}/tasks`);
   };
   return (
     <>

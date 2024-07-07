@@ -77,7 +77,11 @@ class SetValueOperation(pydantic.BaseModel):
     value: Any
 
 
-Operation = RenameOperation | MappingOperation | InferenceOperation | SetValueOperation
+class MapToNullOperation(pydantic.BaseModel):
+    values: list[Any]
+
+
+Operation = RenameOperation | MappingOperation | InferenceOperation | SetValueOperation | MapToNullOperation
 
 
 class ColumnAlignment(pydantic.BaseModel):

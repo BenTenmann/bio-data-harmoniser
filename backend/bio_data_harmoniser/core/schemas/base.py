@@ -1,7 +1,6 @@
 import functools
 import re
 from dataclasses import dataclass
-import operator
 from pathlib import Path
 from typing import Any, Callable, Literal, Protocol, Sequence, TypeVar, runtime_checkable
 
@@ -229,8 +228,9 @@ def identify_target_schema(
     )
     # TODO: we need to potentially compress the dataframe to avoid blowing the context window of the LLM
     data_head = dataframe.head(3).to_csv(index=False, sep="\t")
-    response = llm.predict(
-        llms.clean_prompt_formatting(prompt).format(
+    response = llms.call_llm(
+        llm=llm,
+        prompt=llms.clean_prompt_formatting(prompt).format(
             schemas=schema_str, data_head=data_head
         )
     )
@@ -291,6 +291,8 @@ def get_column_name(
     dataframe, column_map = get_reformatted_columns_dataframe_and_mapping(dataframe)
 
     # TODO: we need to tune this prompt to make sure we don't get false positives
+    # TODO: avoid MeSH ID columns if possible
+    # MeSH IDs are known to be problematic, so we should avoid them if we can
     prompt_template = """
     Given a dataframe and a target column, return the name of the column in the dataframe that matches the target column. If there is no match or you are unsure, answer with an empty string.
 
@@ -316,7 +318,7 @@ def get_column_name(
         df_xml=format_dataframe(dataframe),
         target_column=format_target_column(column),
     )
-    llm_response: str = llm.predict(prompt)
+    llm_response: str = llms.call_llm(llm=llm, prompt=prompt)
     return column_map.get(llm_response)
 
 
@@ -349,8 +351,9 @@ def contains_free_text_version_of_column(dataframe: pd.DataFrame, column: pa.Col
 
     Just answer with "yes" if the dataframe contains a free-text version of the target column, and "no" otherwise. Do not explain your answer.
     """
-    response = llm.predict(
-        llms.clean_prompt_formatting(prompt).format(
+    response = llms.call_llm(
+        llm=llm,
+        prompt=llms.clean_prompt_formatting(prompt).format(
             columns=format_columns(dataframe.columns),
             df_xml=format_dataframe(dataframe),
             target_column=format_target_column(column),
@@ -385,8 +388,9 @@ def get_free_text_column_name(dataframe: pd.DataFrame, column: pa.Column, llm: B
 
     Provide just the name of the column that contains free-text mentions of the target column and nothing else. If there is no match or you are unsure, answer with an empty string.
     """
-    response = llm.predict(
-        llms.clean_prompt_formatting(prompt).format(
+    response = llms.call_llm(
+        llm=llm,
+        prompt=llms.clean_prompt_formatting(prompt).format(
             columns=format_columns(dataframe.columns),
             df_xml=format_dataframe(dataframe),
             target_column=format_target_column(column),
@@ -503,7 +507,7 @@ def align_dataframe_to_schema(
                     value=column.default,
                 )
             )
-    return schema.validate(dataframe)
+    return schema.coerce_dtype(dataframe[sorted(schema.columns)])
 
 
 def _sort_columns_based_on_dependencies(

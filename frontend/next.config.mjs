@@ -6,6 +6,11 @@ const nextConfig = {
       destination: "/dashboard/ingestion",
       permanent: false,
     },
+    {
+      source: "/dashboard",
+      destination: "/dashboard/ingestion",
+      permanent: false,
+    },
   ],
 };
 

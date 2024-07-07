@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 import sentence_transformers
 from langchain_core.language_models import BaseLanguageModel
+from langchain_core.messages import BaseMessage
+from loguru import logger
 from sklearn import metrics
 
 from bio_data_harmoniser.core import settings
@@ -38,6 +40,29 @@ def get_llm(
     else:
         raise ValueError(f"Unknown provider {provider}")
     return llm
+
+
+def wrangle_llm_response(response: str | BaseMessage) -> str:
+    if isinstance(response, str):
+        return response
+    content = response.content
+    if isinstance(content, str):
+        return content
+    if len(content) == 0:
+        return ""
+    if len(content) > 1:
+        logger.warning(f"LLM returned multiple results: {content}")
+    if any(not isinstance(r, str) for r in content):
+        # in case there are any dicts in the result, we want to know about them
+        logger.warning(f"LLM returned unexpected result: {content}")
+    # since it is `list[str | dict]`, we need to convert it to a list of strings first
+    # (just for safety)
+    return "\n".join(map(str, content))
+
+
+def call_llm(llm: BaseLanguageModel, prompt: str) -> str:
+    result = llm.invoke(prompt)
+    return wrangle_llm_response(result)
 
 
 @functools.cache

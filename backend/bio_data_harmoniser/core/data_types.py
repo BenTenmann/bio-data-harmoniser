@@ -12,11 +12,12 @@ from pandera.engines.type_aliases import PandasObject
 from pandera.io import pandas_io
 from pandera.io.pandas_io import _deserialize_component_stats as _orig_deserialize_component_stats
 
-from bio_data_harmoniser.core import ontology, utils
+from bio_data_harmoniser.core import logging, ontology, utils
 from bio_data_harmoniser.core.normalisation import entity as entity_normalisation
 
 
 class _NoOpCheckMixin:
+    # TODO: remove this
     def check(
         self,
         pandera_dtype: dtypes.DataType,
@@ -48,7 +49,7 @@ class EntityType(_NoOpCheckMixin, pandas_engine.STRING):
             isinstance(data_container.dtype, pd.CategoricalDtype)
             or pd.api.types.is_string_dtype(data_container)
         ):
-            data_container = data_container.astype(str)
+            data_container = data_container.astype("string[pyarrow]")
         assert self.normaliser is not None, f"No normaliser found for {self}"
         out = self.normaliser.normalise(data_container)
         return out
@@ -104,6 +105,26 @@ class EntityType(_NoOpCheckMixin, pandas_engine.STRING):
         )
 
 
+def _log_map_to_null_operation(column_name: str, values: list[Any]) -> None:
+    log_session = logging.LoggingSession.get_session()
+    log_session.log_column_alignment_op(
+        column_name=column_name,
+        operation=logging.MapToNullOperation(values=values),
+    )
+
+
+def _coerce_with_regex(data_container: Any, regex: str) -> Any:
+    if not pd.api.types.is_string_dtype(data_container):
+        data_container = data_container.astype("string[pyarrow]")
+    data_container = data_container.str.strip()
+    valid_values = data_container.str.match(regex)
+    _log_map_to_null_operation(
+        column_name=data_container.name,
+        values=data_container.loc[~valid_values].dropna().unique().tolist(),
+    )
+    return data_container.where(valid_values, pd.NA)
+
+
 @pandas_engine.Engine.register_dtype(
     equivalents=["AminoAcidSequence"]
 )
@@ -115,10 +136,7 @@ class AminoAcidSequenceType(_NoOpCheckMixin, pandas_engine.STRING):
         return "AminoAcidSequence"
 
     def coerce(self, data_container: Any):
-        if not pd.api.types.is_string_dtype(data_container):
-            data_container = data_container.astype(str)
-        data_container = data_container.str.strip()
-        return data_container.where(data_container.str.match(self.regex), pd.NA)
+        return _coerce_with_regex(data_container, self.regex)
 
 
 @pandas_engine.Engine.register_dtype(
@@ -132,10 +150,7 @@ class NucleotideSequenceType(_NoOpCheckMixin, pandas_engine.STRING):
         return "NucleotideSequence"
 
     def coerce(self, data_container: Any):
-        if not pd.api.types.is_string_dtype(data_container):
-            data_container = data_container.astype(str)
-        data_container = data_container.str.strip()
-        return data_container.where(data_container.str.match(self.regex), pd.NA)
+        return _coerce_with_regex(data_container, self.regex)
 
 
 @pandas_engine.Engine.register_dtype(
@@ -155,14 +170,16 @@ class SMILESType(_NoOpCheckMixin, pandas_engine.STRING):
                 "Cannot coerce SMILES to string. Please install rdkit with `pip install rdkit`"
             ) from e
         if not pd.api.types.is_string_dtype(data_container):
-            data_container = data_container.astype(str)
+            data_container = data_container.astype("string[pyarrow]")
         data_container = data_container.str.strip()
-        return pd.Series(
-            [
-                Chem.CanonSmiles(elem) if Chem.MolFromSmiles(elem) else pd.NA
-                for elem in data_container
-            ]
+        valid_smiles = [
+            isinstance(elem, str) and Chem.MolFromSmiles(elem) for elem in data_container
+        ]
+        _log_map_to_null_operation(
+            column_name=data_container.name,
+            values=data_container.loc[~pd.Series(valid_smiles)].dropna().unique().tolist(),
         )
+        return data_container.where(valid_smiles, pd.NA).apply(Chem.CanonSmiles)
 
 
 def _deserialize_component_stats(serialized_component_stats) -> None:

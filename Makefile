@@ -84,10 +84,11 @@ airflow_scheduler:
 	cd $(BACKEND_PATH) && $(POETRY) airflow scheduler 2>&1 | tee -a scheduler.log
 
 airflow_worker:
-	cd $(BACKEND_PATH) && $(POETRY) airflow celery worker 2>&1 | tee -a celery.log
+	cd $(BACKEND_PATH) && \
+		trap '$(POETRY) airflow celery stop' EXIT && \
+		$(POETRY) airflow celery worker 2>&1 | tee -a celery.log
 
 airflow: airflow_webserver airflow_scheduler airflow_worker
-	cd $(BACKEND_PATH) && $(POETRY) airflow celery stop
 
 backend_dev:
 	cd $(BACKEND_PATH) && $(POETRY) uvicorn bio_data_harmoniser.api.app:app \

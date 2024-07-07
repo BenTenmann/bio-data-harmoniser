@@ -7,9 +7,10 @@ from dataclasses import dataclass, field
 import more_itertools
 import numpy as np
 import pandas as pd
+import tenacity
+import tqdm
 from langchain_core.language_models import BaseLanguageModel
 from loguru import logger
-import tqdm
 
 from bio_data_harmoniser.core import ontology, llms, logging, utils
 
@@ -24,13 +25,14 @@ def is_free_text(series: pd.Series, llm: BaseLanguageModel) -> bool:
     </entries>
     
     Answer either "free text" or "identifiers" and nothing else."""
-    response = llm.predict(
-        llms.clean_prompt_formatting(prompt).format(
+    response = llms.call_llm(
+        llm=llm,
+        prompt=llms.clean_prompt_formatting(prompt).format(
             entries="\n".join(
                 f"<entry index={i}>{entry}</entry>"
                 for i, entry in enumerate(series.dropna().unique()[:10])
             )
-        )
+        ),
     )
     return response.lower().strip().strip(".").strip("'") == "free text"
 
@@ -71,6 +73,10 @@ def _retrieve(
     return results
 
 
+class _LlmCallException(Exception):
+    pass
+
+
 def _classify(
     retrieved_results: pd.DataFrame, llm: BaseLanguageModel, chunk_size: int = 64
 ) -> pd.DataFrame:
@@ -91,20 +97,30 @@ def _classify(
 
     Entity = namedtuple("Entity", ["name", "id", "score"])
 
+    @tenacity.retry(
+        wait=tenacity.wait_random_exponential(min=1, max=60),
+        stop=tenacity.stop_after_attempt(5),
+        retry=tenacity.retry_if_exception_type(_LlmCallException),
+        reraise=True,
+    )
     async def _classify_mention(mention: str, entities: list[Entity]) -> Entity:
         first_entity = entities[0]
         if np.isclose(first_entity.score, 1.0):
             logger.debug("First entity has a score of 1.0, so probably an exact match")
             return first_entity
 
-        response = await llm.apredict(
-            llms.clean_prompt_formatting(prompt).format(
-                mention=mention,
-                entities="\n".join(
-                    f"<entity>{entity.name}</entity>" for entity in entities
-                ),
+        try:
+            response = await llm.ainvoke(
+                llms.clean_prompt_formatting(prompt).format(
+                    mention=mention,
+                    entities="\n".join(
+                        f"<entity>{entity.name}</entity>" for entity in entities
+                    ),
+                )
             )
-        )
+        except Exception as exc:
+            raise _LlmCallException() from exc
+        response = llms.wrangle_llm_response(response)
         selected_entity = {entity.name: entity for entity in entities}.get(response)
         if selected_entity is None:
             logger.warning(f"No entity selected for mention {mention!r}")
@@ -176,8 +192,9 @@ def _get_curie_prefix_if_needed(series: pd.Series, available_prefixes: list[str]
     Answer with the prefix and nothing else. If no prefix is needed, return an empty string.
     """
 
-    response = llm.predict(
-        llms.clean_prompt_formatting(prompt).format(
+    response = llms.call_llm(
+        llm=llm,
+        prompt=llms.clean_prompt_formatting(prompt).format(
             container_name=series.name,
             prefixes="\n".join(
                 [f"<prefix index={i}>{prefix}</prefix" for i, prefix in enumerate(available_prefixes, 1)]
@@ -235,23 +252,37 @@ def _finalise_output(
     index = series.index if series.index is not None else pd.RangeIndex(0, len(series))
 
     original_index_name = index.name
-    temp_index_col_name: str | list[str] = "original_index"
+    temp_index_col_name: str | list[str] = "__original_index"
     if isinstance(index, pd.MultiIndex):
         original_index_name = index.names
         temp_index_col_name = [
             f"__original_index_{i}"
             for i in range(len(index.names))
         ]
-    ids = (
-        results.merge(
+    potentially_duplicated_ids = (
+        results[[ontology.OntologyColumns.id, "mention"]]
+        .merge(
             series.to_frame("mention")
             .reset_index(names=temp_index_col_name),
             on="mention",
             how="right"
         )
-        .set_index(temp_index_col_name)
+    )
+
+    deduplicated_ids = (
+        # TODO: this is a bit of a hack, but it works for now
+        # we need to figure out a better way to do this, maybe using an llm call (with additional context)
+        # the additional context is necessary because these types of duplications should only
+        # really happen when we are mapping using xrefs, and the xrefs are not guaranteed to be unique
+        potentially_duplicated_ids.groupby(temp_index_col_name)
+        .first()
+        .reset_index()
+    )
+    ids = (
+        deduplicated_ids.set_index(temp_index_col_name)
         .rename_axis(original_index_name)
         [ontology.OntologyColumns.id]
+        .astype("string[pyarrow]")
     )
     return ids.loc[index]
 
