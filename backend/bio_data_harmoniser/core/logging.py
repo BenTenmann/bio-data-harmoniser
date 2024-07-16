@@ -89,9 +89,20 @@ class ColumnAlignment(pydantic.BaseModel):
     operations: list[Operation]
 
 
+class FormatMetadata(pydantic.BaseModel):
+    name: str
+    description: str
+    reference: str | None = None
+
+
+class SchemaMetadata(pydantic.BaseModel):
+    name: str
+    description: str
+
+
 class Decision(pydantic.BaseModel):
     type: DecisionType
-    content: str | ColumnAlignment
+    content: str | ColumnAlignment | FormatMetadata | SchemaMetadata
 
 
 class Argument(pydantic.BaseModel):

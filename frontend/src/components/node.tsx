@@ -4,6 +4,8 @@ import {
   CloudArrowDownIcon,
   BookOpenIcon,
   ClipboardDocumentListIcon,
+  DocumentTextIcon,
+  TableCellsIcon,
   LinkIcon,
   CheckCircleIcon,
   XCircleIcon,
@@ -99,10 +101,38 @@ type ColumnAlignment = {
   operations: Operation[];
 };
 
-type Decision = {
-  type: string;
-  content: string | ColumnAlignment;
+type FormatMetadata = {
+  name: string;
+  description: string;
+  reference?: string;
 };
+
+type SchemaMetadata = {
+  name: string;
+  description: string;
+};
+
+type FormatDecision = {
+  type: "file_format_identified";
+  content: FormatMetadata;
+};
+
+type ColumnAlignmentDecision = {
+  type: "column_aligned";
+  content: ColumnAlignment;
+};
+
+type SchemaDecision = {
+  type: "schema_identified";
+  content: SchemaMetadata;
+};
+
+type OtherDecision = {
+  type: "retrieval_type_identified" | "extraction_type_identified" | "url_retrieved" | "file_copied"| "unable_to_process";
+  content: string;
+};
+
+type Decision = FormatDecision | ColumnAlignmentDecision | SchemaDecision | OtherDecision;
 
 export type TaskType = "retrieve" | "download" | "extract" | "process";
 
@@ -151,6 +181,10 @@ function DecisionIcon({ type }: { type: string }) {
   switch (type) {
     case "column_aligned":
       return <CircleStackIcon className={`${size} ${color}`} />;
+    case "file_format_identified":
+      return <DocumentTextIcon className={`${size} ${color}`} />;
+    case "schema_identified":
+      return <TableCellsIcon className={`${size} ${color}`} />;
     default:
       return <ExclamationCircleIcon className={`${size} ${color}`} />;
   }
@@ -206,9 +240,7 @@ function DecisionComponent({
     >
       <DecisionIcon type={decision.type} />
       <span className="text-sm">
-        {typeof decision.content === "string" ? (
-          decision.content
-        ) : (
+        {decision.type === "column_aligned" ? (
           <div className="flex flex-row items-center space-x-2">
             <span className="text-sm">{decision.content.column_name}</span>
             <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
@@ -283,7 +315,50 @@ function DecisionComponent({
               </DialogActions>
             </Dialog>
           </div>
-        )}
+        ) : decision.type === "file_format_identified" ? (
+            <div className="flex flex-row items-center space-x-2">
+              <span className="text-sm">{decision.content.name}</span>
+              <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
+                <DialogTitle>
+                  file format <Code>{decision.content.name}</Code>
+                </DialogTitle>
+                <DialogDescription className="flex flex-row items-center space-x-2">
+                  {decision.content.description}
+                  {
+                    decision.content.reference && (
+                      <Link href={decision.content.reference} target="_blank">
+                        <QuestionMarkCircleIcon className="h-4 w-4" />
+                      </Link>
+                    )
+                  }
+                </DialogDescription>
+                <DialogActions>
+                  <Button outline onClick={() => setShowDialog(false)}>
+                    Close
+                  </Button>
+                </DialogActions>
+              </Dialog>
+            </div>
+          ) : decision.type === "schema_identified" ? (
+              <div className="flex flex-row items-center space-x-2">
+                <span className="text-sm">{decision.content.name}</span>
+                <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
+                  <DialogTitle>
+                    schema <Code>{decision.content.name}</Code>
+                  </DialogTitle>
+                  <DialogDescription className="flex flex-row items-center space-x-2">
+                    {decision.content.description}
+                  </DialogDescription>
+                  <DialogActions>
+                    <Button outline onClick={() => setShowDialog(false)}>
+                      Close
+                    </Button>
+                  </DialogActions>
+                </Dialog>
+              </div>
+        ) : (
+            decision.content
+          )}
       </span>
     </div>
   );

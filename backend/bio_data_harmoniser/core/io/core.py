@@ -25,6 +25,7 @@ class Format:
     )
     name: str = ""
     description: str = ""
+    reference: str | None = None
 
 
 def as_pandas_reader(
@@ -38,31 +39,46 @@ def as_pandas_reader(
 class SupportedFormats:
     csv = Format(
         name="csv",
+        description="A file containing comma-separated values (CSV) data.",
+        reference="https://en.wikipedia.org/wiki/Comma-separated_values",
         suffixes=(".csv",),
         read=as_pandas_reader(pd.read_csv),
         write=pd.DataFrame.to_csv,
     )
     tsv = Format(
         name="tsv",
+        description="A file containing comma-separated values (TSV) data.",
+        reference="https://en.wikipedia.org/wiki/Tab-separated_values",
         suffixes=(".tsv",),
         read=as_pandas_reader(pd.read_csv, sep="\t"),
         write=functools.partial(pd.DataFrame.to_csv, sep="\t"),
     )
     wsv = Format(
         name="wsv",
+        description="A file containing comma-separated values (WSV) data.",
         suffixes=(".txt",),
         read=as_pandas_reader(pd.read_csv, sep=r"\s+"),
         write=functools.partial(pd.DataFrame.to_csv, sep=" "),
     )
     parquet = Format(
         name="parquet",
+        description="A file in the Apache Parquet format.",
+        reference="https://parquet.apache.org",
         suffixes=(".parquet", ".pq"),
         read=as_pandas_reader(pd.read_parquet),
         write=pd.DataFrame.to_parquet,
     )
-    vcf = Format(name="vcf", suffixes=(".vcf",), read=vcf.read_vcf)
+    vcf = Format(
+        name="vcf",
+        description="A file in the Variant Call Format (VCF) format.",
+        reference="https://samtools.github.io/hts-specs/VCFv4.3.pdf",
+        suffixes=(".vcf",),
+        read=vcf.read_vcf
+    )
     excel = Format(
         name="excel",
+        description="A file in the Excel format.",
+        reference="https://en.wikipedia.org/wiki/Microsoft_Excel",
         suffixes=(".xls", ".xlsx"),
         read=as_pandas_reader(pd.read_excel),
         write=pd.DataFrame.to_excel,

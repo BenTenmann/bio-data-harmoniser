@@ -486,7 +486,11 @@ with airflow.DAG(
             sess.log_decision(
                 logging.Decision(
                     type=logging.DecisionType.FILE_FORMAT_IDENTIFIED,
-                    content=fmt.name,
+                    content=logging.FormatMetadata(
+                        name=fmt.name,
+                        description=fmt.description,
+                        reference=fmt.reference,
+                    ),
                 )
             )
             try:
@@ -503,7 +507,10 @@ with airflow.DAG(
                 sess.log_decision(
                     logging.Decision(
                         type=logging.DecisionType.SCHEMA_IDENTIFIED,
-                        content=schema.name,
+                        content=logging.SchemaMetadata(
+                            name=schema.name,
+                            description=schema.description,
+                        ),
                     )
                 )
                 logger.info(f"Identified schema: {schema.name}")
