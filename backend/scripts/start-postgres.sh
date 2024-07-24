@@ -11,9 +11,9 @@ if [[ "$OS_NAME" = "Darwin" ]]; then
   fi
   brew services start postgresql
 else
-  if ! command -v systemctl &> /dev/null; then
-    echo "systemd is not installed. Please install it and try again."
+  if ! command -v pg_ctlcluster &> /dev/null; then
+    echo "PostgreSQL is not installed. Please install it and try again."
     exit 1
   fi
-  pg_ctl start
+  pg_ctlcluster 13 main start -- --wait
 fi

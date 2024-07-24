@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 POETRY := poetry run
 
 BASE_PATH := $(shell pwd)
@@ -6,14 +8,14 @@ FRONTEND_PATH := $(BASE_PATH)/frontend
 PYTHONPATH := $(BASE_PATH):$(PYTHONPATH)
 
 AIRFLOW_HOME := $(BASE_PATH)/backend
-AIRFLOW_HOST := localhost
-AIRFLOW_PORT := 8080
+AIRFLOW_HOST ?= localhost
+AIRFLOW_PORT ?= 8080
 AIRFLOW_USERNAME := admin
 AIRFLOW_PASSWORD := admin
 AIRFLOW_OUTPUT_DIR := $(BASE_PATH)/backend/data/airflow
 
-FASTAPI_HOST := 0.0.0.0
-FASTAPI_PORT := 80
+FASTAPI_HOST ?= 0.0.0.0
+FASTAPI_PORT ?= 80
 FASTAPI_UPLOAD_DIR := $(BASE_PATH)/backend/data/uploads
 
 ONTOLOGY_PATH := $(BASE_PATH)/backend/data/ontology
@@ -21,6 +23,9 @@ ONTOLOGY_PATH := $(BASE_PATH)/backend/data/ontology
 LLM_PROVIDER := anthropic
 LLM_MODEL := claude-3-5-sonnet-20240620
 LLM_EMBEDDINGS_MODEL := mixedbread-ai/mxbai-embed-large-v1
+
+FRONTEND_HOST ?= localhost
+FRONTEND_PORT ?= 3000
 
 # see: https://stackoverflow.com/a/76405182
 NO_PROXY := *
@@ -97,9 +102,23 @@ backend_dev:
 		--reload
 
 frontend_dev:
-	cd $(FRONTEND_PATH) && npm run dev
+	cd $(FRONTEND_PATH) && npm run dev -- --hostname $(FRONTEND_HOST) --port $(FRONTEND_PORT)
 
 local: airflow backend_dev frontend_dev
+
+start_postgres:
+	cd $(BACKEND_PATH) && \
+		./scripts/start-postgres.sh
+
+start_redis:
+	cd $(BACKEND_PATH) && \
+		./scripts/start-redis.sh
+
+setup_airflow: start_postgres start_redis
+	@echo "Setting up Airflow"
+	cd $(BACKEND_PATH) && \
+		export USER=postgres && \
+		./scripts/setup-airflow.sh
 
 airflow_reset:
 	cd $(BACKEND_PATH) && \
@@ -114,3 +133,24 @@ airflow_reset:
 			--role Admin && \
 		rm -rf $(AIRFLOW_OUTPUT_DIR)/* && \
 		rm -rf $(AIRFLOW_HOME)/logs/*
+
+run_in_docker:
+	@echo "Running in Dokcer"
+	docker run \
+		--rm \
+		--name bio-data-harmoniser \
+		-p 3000:3000 \
+		-p 80:80 \
+		-p 8080:8080 \
+		-u 0 \
+		--platform linux/x86_64 \
+		-v $(AIRFLOW_OUTPUT_DIR):/app/backend/data/airflow \
+		-v $(FASTAPI_UPLOAD_DIR):/app/backend/data/uploads \
+		-v $(ONTOLOGY_PATH):/app/backend/data/ontology \
+		-e AIRFLOW_HOST=0.0.0.0 \
+		-e AIRFLOW_PORT=8080 \
+		-e FASTAPI_HOST=0.0.0.0 \
+		-e FASTAPI_PORT=80 \
+		-e FRONTEND_HOST=0.0.0.0 \
+		-e FRONTEND_PORT=3000 \
+		bio-data-harmoniser:latest

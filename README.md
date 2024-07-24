@@ -9,12 +9,10 @@ different sources, to make it easier to get insights from the data.
 
 ## Usage
 
-### User interface
-
-You can use `bio-data-harmoniser` as a web application. To do so, you need to run the following command:
+In general, we recommend using Docker to run the tool. You can use the following command to start the tool:
 
 ```bash
-make local -j 5
+make run_in_docker
 ```
 
-This will start the web application on `http://localhost:3000`.
+This will start the tool in a Docker container. You can access the tool at `http://0.0.0.0:3000`.

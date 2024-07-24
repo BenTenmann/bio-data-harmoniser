@@ -18,7 +18,7 @@ GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO airflow;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO airflow;
 ALTER DATABASE airflow OWNER TO airflow;
 EOF
-    psql -U "$USER" -d postgres -f tmp.sql
+    sudo -u postgres psql -U "$USER" -d postgres -f tmp.sql
 fi
 
 export AIRFLOW_HOME
