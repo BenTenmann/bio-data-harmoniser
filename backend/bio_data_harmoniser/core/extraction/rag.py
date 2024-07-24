@@ -1,3 +1,4 @@
+import contextlib
 import enum
 import re
 from dataclasses import dataclass, field
@@ -121,15 +122,14 @@ class RetrievalAugmentedGenerator:
 
         Provide a short answer to the question with citations to sources used in the context. The citations should be given as a list of integers, where each integer represents the index of the chunk in the context that the citation is for.
         For example, if you used `<ctx index=0>` to answer the question, the citation should be `[[0]]`. If you used `<ctx index=1>` and `<ctx index=2>` to answer the question, the citation should be `[[1,2]]`, and so on. The citations should be given after the answer, and nothing should follow the citations.
-        Do not explain your answer.
+        The answer should be short and concise. It should not be a sentence, but a single word or phrase. Do not explain your answer.
         """
 
         def _answer_to_response(answer: str, ctx: list[str]) -> Response:
             def _to_int(match: str) -> int | None:
-                try:
+                with contextlib.suppress(ValueError):
                     return int(match)
-                except ValueError:
-                    return None
+                return None
 
             def _clean_answer(a: str) -> str:
                 a = re.sub(r"\[\[[\d,\s]+\]\]", "", a, flags=re.MULTILINE)
