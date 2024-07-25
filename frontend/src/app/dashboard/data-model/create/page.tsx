@@ -2,11 +2,12 @@ import {
   CreateSchema as CreateSchemaComponent,
   type DataType,
 } from "@/components/create_schema";
+import { endpoints } from "@/lib/endpoints";
 
 export const dynamic = "force-dynamic";
 
 async function getDataTypes(): Promise<DataType[]> {
-  const response = await fetch("http://0.0.0.0:80/data-types");
+  const response = await fetch(endpoints.dataTypes);
   if (!response.ok) {
     throw new Error("Failed to fetch data types");
   }
@@ -14,7 +15,7 @@ async function getDataTypes(): Promise<DataType[]> {
 }
 
 async function getStringDataType(): Promise<DataType> {
-  const response = await fetch("http://0.0.0.0:80/data-types/STRING");
+  const response = await fetch(`${endpoints.dataTypes}/STRING`);
   if (!response.ok) {
     throw new Error("Failed to fetch string data type");
   }

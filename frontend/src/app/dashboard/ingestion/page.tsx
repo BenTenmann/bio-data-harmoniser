@@ -5,6 +5,7 @@ import { statusColors } from "@/lib/utils";
 import React from "react";
 import { Text } from "@/components/text";
 import { clsx } from "clsx";
+import { endpoints } from "@/lib/endpoints";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ const colours = {
 
 async function getIngestions(): Promise<Ingestion[]> {
   const userId = "test_user";
-  const response = await fetch(`http://0.0.0.0:80/ingestions/${userId}`);
+  const response = await fetch(`${endpoints.ingestions}/${userId}`);
   return response.json();
 }
 

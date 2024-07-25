@@ -1,4 +1,5 @@
 "use server";
+import { endpoints } from "./endpoints";
 
 export type Mapping = {
   mention: string;
@@ -15,7 +16,7 @@ export type Entity = {
 };
 
 export async function fetchMappings(run_id: string) {
-  const response = await fetch(`http://0.0.0.0:80/mappings/${run_id}`);
+  const response = await fetch(`${endpoints.mappings}/${run_id}`);
   return await response.json();
 }
 
@@ -24,7 +25,7 @@ export async function updateMapping(
   mapping: Mapping,
   entity: Entity,
 ): Promise<boolean> {
-  const response = await fetch(`http://0.0.0.0:80/mappings/${run_id}`, {
+  const response = await fetch(`${endpoints.mappings}/${run_id}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -48,7 +49,7 @@ export async function fetchEntities(
   query?: string,
   limit?: number,
 ) {
-  const response = await fetch(`http://0.0.0.0:80/entities`, {
+  const response = await fetch(endpoints.entities, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

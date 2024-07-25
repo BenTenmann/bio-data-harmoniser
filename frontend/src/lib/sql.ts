@@ -1,10 +1,11 @@
 "use server";
+import { endpoints } from "./endpoints";
 
 import { QueryStatus } from "@/lib/utils";
 
 export async function submitSql(query: string, runId: string): Promise<string> {
   const response = await fetch(
-    `http://localhost:8080/api/v1/dags/sql_query/dagRuns`,
+    endpoints.sqlQueryDagRuns,
     {
       method: "POST",
       headers: {
@@ -25,7 +26,7 @@ export async function submitSql(query: string, runId: string): Promise<string> {
 
 export async function getQueryStatus(query_id: string): Promise<QueryStatus> {
   const response = await fetch(
-    `http://localhost:8080/api/v1/dags/sql_query/dagRuns/${query_id}`,
+    `${endpoints.sqlQueryDagRuns}/${query_id}`,
     {
       headers: {
         "Content-Type": "application/json",
@@ -43,6 +44,6 @@ export async function getQueryStatus(query_id: string): Promise<QueryStatus> {
 }
 
 export async function getSqlResults(queryId: string) {
-  const response = await fetch(`http://0.0.0.0:80/sql/${queryId}`);
+  const response = await fetch(`${endpoints.sql}/${queryId}`);
   return await response.json();
 }

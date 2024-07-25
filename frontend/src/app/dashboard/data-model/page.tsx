@@ -1,11 +1,12 @@
 import { Button } from "@/components/button";
 import { ChevronRightIcon, PlusIcon } from "@heroicons/react/20/solid";
 import React from "react";
+import { endpoints } from "@/lib/endpoints";
 
 export const dynamic = "force-dynamic";
 
 async function getSchemas() {
-  const res = await fetch("http://0.0.0.0:80/schemas");
+  const res = await fetch(endpoints.schemas);
   return await res.json();
 }
 

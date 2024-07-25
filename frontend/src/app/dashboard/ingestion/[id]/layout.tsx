@@ -1,5 +1,5 @@
 import IngestionDashboard from "@/components/ingestion_dashboard";
-import { getDagRun } from "@/lib/utils";
+import { getDagRun } from "@/lib/server_funcs";
 
 export default async function IngestionLayout({
   children,

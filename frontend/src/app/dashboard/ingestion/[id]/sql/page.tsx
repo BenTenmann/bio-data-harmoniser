@@ -1,6 +1,7 @@
 import { Table, TableBody, TableCell, TableRow } from "@/components/table";
 import { ChevronDoubleRightIcon } from "@heroicons/react/24/outline";
 import { SqlQuery } from "@/components/sql_query";
+import { endpoints } from "@/lib/endpoints";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,7 @@ function Catalog({ catalog }: { catalog: any[] }) {
 }
 
 async function getCatalog(id: string) {
-  const res = await fetch(`http://0.0.0.0:80/catalog/${id}`);
+  const res = await fetch(`${endpoints.catalog}/${id}`);
   return await res.json();
 }
 

@@ -1,13 +1,12 @@
 import { DAG } from "@/components/dag";
-import IngestionDashboard from "@/components/ingestion_dashboard";
-import { getDagRun } from "@/lib/utils";
 import "reactflow/dist/style.css";
 import "tailwindcss/tailwind.css";
+import { endpoints } from "@/lib/endpoints";
 
 export const dynamic = "force-dynamic";
 
 async function getDag(runId: string) {
-  const response = await fetch(`http://0.0.0.0:80/dag/${runId}`);
+  const response = await fetch(`${endpoints.dag}/${runId}`);
   if (!response.ok) {
     throw new Error("Failed to fetch DAG");
   }

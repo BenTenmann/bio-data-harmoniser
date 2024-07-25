@@ -16,6 +16,7 @@ import { Button } from "@/components/button";
 import { useRouter } from "next/navigation";
 import * as Headless from "@headlessui/react";
 import { Radio } from "@/components/radio";
+import { endpoints } from "@/lib/endpoints";
 
 export type DataTypeParamOption = {
   name: string;
@@ -317,7 +318,7 @@ export function CreateSchema({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     console.log(formData);
-    const res = await fetch("http://0.0.0.0:80/schemas", {
+    const res = await fetch(endpoints.schemas, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

@@ -14,6 +14,7 @@ import { Badge } from "@/components/badge";
 import { Button } from "@/components/button";
 import { statusColors } from "@/lib/utils";
 import Tabs from "@/components/tabs";
+import { submitDagRun } from "@/lib/server_funcs";
 
 type Status = "success" | "failed" | "running";
 
@@ -34,26 +35,13 @@ export default function IngestionDashboard({ datum, children }) {
   const currentPath = usePathname();
   const router = useRouter();
   const reRun = async () => {
-    const res = await fetch(
-      "http://localhost:8080/api/v1/dags/data_extraction/dagRuns",
-      {
-        headers: {
-          Authorization: "Basic " + btoa("admin:admin"),
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        body: JSON.stringify({
-          conf: datum.conf,
-        }),
-      },
-    );
-    if (!res.ok) {
+    const { resOk, runId} = await submitDagRun(datum.conf);
+    if (!resOk) {
         // TODO: handle error
         alert("Failed to rerun ingestion");
         return;
     }
-    const jsonData = await res.json();
-    router.push(`/dashboard/ingestion/${jsonData.dag_run_id}/tasks`);
+    router.push(`/dashboard/ingestion/${runId!}/tasks`);
   };
   return (
     <>

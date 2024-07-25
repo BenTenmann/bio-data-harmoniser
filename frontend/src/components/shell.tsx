@@ -12,7 +12,7 @@ import * as TailwindDialog from "@/components/dialog";
 import { Button } from "@/components/button";
 import { Field, Label } from "@/components/fieldset";
 import { Input } from "@/components/input";
-import { fetchApiKey } from "@/lib/secrets";
+import { fetchApiKey, sendLlmApiKey } from "@/lib/secrets";
 
 const navs = [
   {
@@ -56,18 +56,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   };
 
   const handleSaveSettings = async () => {
-    const response = await fetch("http://0.0.0.0:80/secrets/llm", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        llm_api_key: apiKey,
-      }),
-    });
-    if (!response.ok) {
-      throw new Error(response.statusText);
-    }
+    await sendLlmApiKey(apiKey!);
     setHasChanged(false);
   };
 

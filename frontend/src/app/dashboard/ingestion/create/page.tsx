@@ -15,6 +15,7 @@ import { ArrowUpTrayIcon } from "@heroicons/react/20/solid";
 import { Button } from "@/components/button";
 import { Radio } from "@/components/radio";
 import * as Headless from "@headlessui/react";
+import { uploadFile, submitDagRun, getPaperIngestionMetadata } from "@/lib/server_funcs";
 
 type IngestionType = "URL" | "File Upload";
 
@@ -101,25 +102,16 @@ export default function CreateIngestionPage() {
 
   const handleUrlChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
-    const res = await fetch(`http://0.0.0.0:80/paper-ingestion/metadata`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-      method: "POST",
-      body: JSON.stringify({
-        url: value,
-      }),
-    });
     const updateData: { url: string; name?: string; description?: string } = {
       url: value,
     };
-    if (res.status === 200) {
-      const jsonData = await res.json();
+    const metadata = await getPaperIngestionMetadata(value);
+    if (metadata) {
       if (formData.name === "") {
-        updateData.name = jsonData.name;
+        updateData.name = metadata.name;
       }
       if (formData.description === "") {
-        updateData.description = jsonData.description;
+        updateData.description = metadata.description;
       }
     }
     setFormData((prevState) => ({
@@ -133,40 +125,22 @@ export default function CreateIngestionPage() {
     const file = files![0];
     const fileFormData = new FormData();
     fileFormData.append("file", file);
-    const response = await fetch(`http://0.0.0.0:80/ingestion/file-upload`, {
-      method: "POST",
-      body: fileFormData,
-    });
-    const jsonData: { url: string } = await response.json();
+    const url = await uploadFile(fileFormData);
     setFormData((prevState) => ({
       ...prevState,
-      url: jsonData.url,
+      url: url,
     }));
     setFile(file);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const res = await fetch(
-      "http://localhost:8080/api/v1/dags/data_extraction/dagRuns",
-      {
-        headers: {
-          Authorization: "Basic " + btoa("admin:admin"),
-          "Content-Type": "application/json",
-        },
-        method: "POST",
-        body: JSON.stringify({
-          conf: formData,
-        }),
-      },
-    );
-    if (res.ok) {
+    const { resOk} = await submitDagRun(formData);
+    if (resOk) {
       console.log("Ingestion created");
       router.push("/dashboard/ingestion");
     } else {
-      console.error("Failed to create ingestion");
-      console.error(res.status);
-      console.error(await res.text());
+      alert("Failed to create ingestion");
     }
   };
   return (
