@@ -51,6 +51,8 @@ def main(
                 "xref": _split_array,
             },
         )
+        # there is a `type` column in the nodes file, but it's not used
+        .drop(columns=["type"])
         .rename(
             columns={
                 "id": ontology.OntologyColumns.id,

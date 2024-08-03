@@ -7,6 +7,7 @@ from airflow.models import Variable
 from bio_data_harmoniser.core import utils
 
 LlmProvider = Literal["openai", "anthropic"]
+LlmEmbeddingDevice = Literal["cpu", "cuda"]
 
 LLM_API_KEY_NAME: Literal["llm_api_key"] = "llm_api_key"
 
@@ -47,6 +48,7 @@ class LlmSettings(pydantic_settings.BaseSettings):
     provider: LlmProvider = "anthropic"
     model: str = "claude-3-5-sonnet-20240620"
     embedding_model: str = "mixedbread-ai/mxbai-embed-large-v1"
+    embedding_device: LlmEmbeddingDevice = "cpu"
 
     api_key: str | None = None
 

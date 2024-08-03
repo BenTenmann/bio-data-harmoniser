@@ -67,7 +67,8 @@ def call_llm(llm: BaseLanguageModel, prompt: str) -> str:
 
 @functools.cache
 def get_encoder(
-    model_name: str = settings.llms.embedding_model, device: str = "cpu"
+    model_name: str = settings.llms.embedding_model,
+    device: settings.LlmEmbeddingDevice = settings.llms.embedding_device,
 ) -> sentence_transformers.SentenceTransformer:
     # we pass the device explicitly, because there is a bug when used with Airflow, where it just hangs
     # when it tries to infer the device

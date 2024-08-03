@@ -23,7 +23,7 @@ RUN source ~/.bashrc && nvm install 20
 COPY ./backend/pyproject.toml ./backend/poetry.lock ./backend/
 
 RUN cd backend && \
-    poetry install
+    poetry install --no-root
 
 COPY ./frontend/package.json ./frontend/package-lock.json ./frontend/
 
@@ -33,8 +33,13 @@ RUN cd frontend && \
 
 COPY . .
 
+# we now install the package itself
+# splitting this out from the above allows us to iterate more quickly
+RUN cd backend && \
+    poetry install
+
 EXPOSE 3000
 EXPOSE 80
 EXPOSE 8080
 
-ENTRYPOINT ["./entrypoint.sh"]
+CMD ["./entrypoint.sh"]

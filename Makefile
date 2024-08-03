@@ -7,6 +7,8 @@ BACKEND_PATH := $(BASE_PATH)/backend
 FRONTEND_PATH := $(BASE_PATH)/frontend
 PYTHONPATH := $(BASE_PATH):$(PYTHONPATH)
 
+DOCKER_IMAGE_NAME := bentenmann/bio-data-harmoniser:latest
+
 AIRFLOW_HOME := $(BASE_PATH)/backend
 AIRFLOW_HOST ?= localhost
 AIRFLOW_PORT ?= 8080
@@ -23,6 +25,7 @@ ONTOLOGY_PATH := $(BASE_PATH)/backend/data/ontology
 LLM_PROVIDER := anthropic
 LLM_MODEL := claude-3-5-sonnet-20240620
 LLM_EMBEDDINGS_MODEL := mixedbread-ai/mxbai-embed-large-v1
+LLM_EMBEDDINGS_DEVICE ?= cpu
 
 FRONTEND_HOST ?= localhost
 FRONTEND_PORT ?= 3000
@@ -51,6 +54,7 @@ export ONTOLOGY_PATH
 export LLM_PROVIDER
 export LLM_MODEL
 export LLM_EMBEDDINGS_MODEL
+export LLM_EMBEDDINGS_DEVICE
 
 export NO_PROXY
 export OBJC_DISABLE_INITIALIZE_FORK_SAFETY
@@ -71,12 +75,22 @@ install_frontend:
 
 install: install_backend install_frontend
 
-ingest-ontology:
+ingest_ontology:
 	@echo "Ingesting ontology"
 	cd $(BACKEND_PATH) && $(POETRY) bio-data-harmoniser ingest ontology
 
-setup: install ingest-ontology
+setup: install ingest_ontology
 	@echo "Setup complete"
+
+ingest_ontology_in_docker:
+	docker run \
+		--rm \
+		--name bio-data-harmoniser \
+		-u 0 \
+		--platform linux/x86_64 \
+		-v $(ONTOLOGY_PATH)_test:/app/backend/data/ontology \
+		$(DOCKER_IMAGE_NAME) \
+		poetry -C backend run bio-data-harmoniser ingest ontology
 
 # --- Development ---
 
@@ -153,4 +167,13 @@ run_in_docker:
 		-e FASTAPI_PORT=80 \
 		-e FRONTEND_HOST=0.0.0.0 \
 		-e FRONTEND_PORT=3000 \
-		bio-data-harmoniser:latest
+		$(DOCKER_IMAGE_NAME)
+
+docker_build:
+	docker build \
+		--platform linux/x86_64 \
+		-f Dockerfile \
+		-t $(DOCKER_IMAGE_NAME) .
+
+docker_push:
+	docker push $(DOCKER_IMAGE_NAME)
