@@ -16,6 +16,10 @@ AIRFLOW_USERNAME := admin
 AIRFLOW_PASSWORD := admin
 AIRFLOW_OUTPUT_DIR := $(BASE_PATH)/backend/data/airflow
 
+# the directory where the Postgres data is stored
+# this is only used for the Docker image
+POSTGRES_DATA_DIR := $(BASE_PATH)/backend/data/postgres
+
 FASTAPI_HOST ?= 0.0.0.0
 FASTAPI_PORT ?= 80
 FASTAPI_UPLOAD_DIR := $(BASE_PATH)/backend/data/uploads
@@ -44,6 +48,8 @@ export AIRFLOW_HOME
 export AIRFLOW_HOST
 export AIRFLOW_PORT
 export AIRFLOW_OUTPUT_DIR
+
+export POSTGRES_DATA_DIR
 
 export FASTAPI_HOST
 export FASTAPI_PORT
@@ -161,12 +167,14 @@ run_in_docker:
 		-v $(AIRFLOW_OUTPUT_DIR):/app/backend/data/airflow \
 		-v $(FASTAPI_UPLOAD_DIR):/app/backend/data/uploads \
 		-v $(ONTOLOGY_PATH):/app/backend/data/ontology \
+		-v $(POSTGRES_DATA_DIR):/app/backend/data/postgres \
 		-e AIRFLOW_HOST=0.0.0.0 \
 		-e AIRFLOW_PORT=8080 \
 		-e FASTAPI_HOST=0.0.0.0 \
 		-e FASTAPI_PORT=80 \
 		-e FRONTEND_HOST=0.0.0.0 \
 		-e FRONTEND_PORT=3000 \
+		-e PGDATA=/app/backend/data/postgres \
 		$(DOCKER_IMAGE_NAME)
 
 docker_build:

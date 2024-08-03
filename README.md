@@ -9,7 +9,8 @@ different sources, to make it easier to get insights from the data.
 
 ## Usage
 
-In general, we recommend using Docker to run the tool. To do so, you first need to ingest the MONDO KG ontology:
+In general, we recommend using Docker to run the tool. To do so, you first need to ingest the [Monarch KG](https://monarchinitiative.org/docs/monarch-kg/)
+ontology:
 
 ```bash
 make ingest_ontology_in_docker
